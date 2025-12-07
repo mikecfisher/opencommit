@@ -1,15 +1,14 @@
 import axios, { AxiosInstance } from 'axios';
-import { OpenAI } from 'openai';
 import { removeContentTags } from '../utils/removeContentTags';
-import { AiEngine, AiEngineConfig } from './Engine';
+import { AiEngineConfig } from './Engine';
 
 interface FlowiseAiConfig extends AiEngineConfig {}
 
-export class FlowiseEngine implements AiEngine {
+export class FlowiseEngine {
   config: FlowiseAiConfig;
   client: AxiosInstance;
 
-  constructor(config) {
+  constructor(config: FlowiseAiConfig) {
     this.config = config;
     this.client = axios.create({
       url: `${config.baseURL}/${config.apiKey}`,
@@ -18,7 +17,7 @@ export class FlowiseEngine implements AiEngine {
   }
 
   async generateCommitMessage(
-    messages: Array<OpenAI.Chat.Completions.ChatCompletionMessageParam>
+    messages: Array<{ role: string; content: string }>
   ): Promise<string | undefined> {
     const gitDiff = (messages[messages.length - 1]?.content as string)
       .replace(/\\/g, '\\\\')
@@ -37,10 +36,14 @@ export class FlowiseEngine implements AiEngine {
     try {
       const response = await this.client.post('', payload);
       const message = response.data;
-      let content = message?.text;
+      const content = message?.text;
       return removeContentTags(content, 'think');
-    } catch (err: any) {
-      const message = err.response?.data?.error ?? err.message;
+    } catch (err: unknown) {
+      const error = err as {
+        response?: { data?: { error?: string } };
+        message?: string;
+      };
+      const message = error.response?.data?.error ?? error.message;
       throw new Error('local model issues. details: ' + message);
     }
   }

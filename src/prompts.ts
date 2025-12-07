@@ -1,5 +1,4 @@
 import { note } from '@clack/prompts';
-import { OpenAI } from 'openai';
 import { getConfig } from './commands/config';
 import { i18n, I18nLocals } from './i18n';
 import { configureCommitlintIntegration } from './modules/commitlint/config';
@@ -7,6 +6,15 @@ import { commitlintPrompts } from './modules/commitlint/prompts';
 import { ConsistencyPrompt } from './modules/commitlint/types';
 import * as utils from './modules/commitlint/utils';
 import { removeConventionalCommitWord } from './utils/removeConventionalCommitWord';
+import {
+  BreakingChangeHint,
+  formatBreakingChangeHints
+} from './utils/breakingChange';
+
+interface Message {
+  role: string;
+  content: string;
+}
 
 const config = getConfig();
 const translation = i18n[(config.OCO_LANGUAGE as I18nLocals) || 'en'];
@@ -116,6 +124,30 @@ const getScopeInstruction = () =>
     ? 'Do not include a scope in the commit message format. Use the format: <type>: <subject>'
     : '';
 
+const BREAKING_CHANGE_INSTRUCTION = `
+BREAKING CHANGES: If the diff contains breaking changes (removed public APIs, changed function signatures, removed exports, renamed public interfaces, or other backwards-incompatible changes), you MUST:
+1. Use an exclamation mark after the type/scope (e.g., "feat!:" or "refactor(api)!:")
+2. Add a "BREAKING CHANGE:" footer at the end of the commit message explaining what breaks and how to migrate
+
+Examples of breaking changes to look for:
+- Removed or renamed exported functions, classes, types, or interfaces
+- Changed function parameters (removed, reordered, or type changes)
+- Changed return types
+- Removed configuration options
+- Changed default values that affect behavior
+- Removed API endpoints or routes
+
+Format for breaking change commits:
+<type>(<scope>)!: <subject>
+
+<optional body>
+
+BREAKING CHANGE: <description of what breaks and migration path>
+`;
+
+const getBreakingChangeInstruction = () =>
+  config.OCO_BREAKING_CHANGE ? BREAKING_CHANGE_INSTRUCTION : '';
+
 /**
  * Get the context of the user input
  * @param extraArgs - The arguments passed to the command line
@@ -133,8 +165,9 @@ const userInputCodeContext = (context: string) => {
 const INIT_MAIN_PROMPT = (
   language: string,
   fullGitMojiSpec: boolean,
-  context: string
-): OpenAI.Chat.Completions.ChatCompletionMessageParam => ({
+  context: string,
+  breakingChangeHints: string = ''
+): Message => ({
   role: 'system',
   content: (() => {
     const commitConvention = fullGitMojiSpec
@@ -147,17 +180,17 @@ const INIT_MAIN_PROMPT = (
     const descriptionGuideline = getDescriptionInstruction();
     const oneLineCommitGuideline = getOneLineCommitInstruction();
     const scopeInstruction = getScopeInstruction();
+    const breakingChangeGuideline = getBreakingChangeInstruction();
     const generalGuidelines = `Use the present tense. Lines must not be longer than 74 characters. Use ${language} for the commit message.`;
     const userInputContext = userInputCodeContext(context);
 
-    return `${missionStatement}\n${diffInstruction}\n${conventionGuidelines}\n${descriptionGuideline}\n${oneLineCommitGuideline}\n${scopeInstruction}\n${generalGuidelines}\n${userInputContext}`;
+    return `${missionStatement}\n${diffInstruction}\n${conventionGuidelines}\n${descriptionGuideline}\n${oneLineCommitGuideline}\n${scopeInstruction}\n${breakingChangeGuideline}\n${generalGuidelines}\n${userInputContext}${breakingChangeHints}`;
   })()
 });
 
-export const INIT_DIFF_PROMPT: OpenAI.Chat.Completions.ChatCompletionMessageParam =
-  {
-    role: 'user',
-    content: `diff --git a/src/server.ts b/src/server.ts
+export const INIT_DIFF_PROMPT: Message = {
+  role: 'user',
+  content: `diff --git a/src/server.ts b/src/server.ts
     index ad4db42..f3b18a9 100644
     --- a/src/server.ts
     +++ b/src/server.ts
@@ -181,7 +214,7 @@ export const INIT_DIFF_PROMPT: OpenAI.Chat.Completions.ChatCompletionMessagePara
                 +app.listen(process.env.PORT || PORT, () => {
                     +  console.log(\`Server listening on port \${PORT}\`);
                 });`
-  };
+};
 
 const COMMIT_TYPES = {
   fix: '🐛',
@@ -219,17 +252,20 @@ const getConsistencyContent = (translation: ConsistencyPrompt) => {
   return [fix, feat, description].filter(Boolean).join('\n');
 };
 
-const INIT_CONSISTENCY_PROMPT = (
-  translation: ConsistencyPrompt
-): OpenAI.Chat.Completions.ChatCompletionMessageParam => ({
+const INIT_CONSISTENCY_PROMPT = (translation: ConsistencyPrompt): Message => ({
   role: 'assistant',
   content: getConsistencyContent(translation)
 });
 
 export const getMainCommitPrompt = async (
   fullGitMojiSpec: boolean,
-  context: string
-): Promise<Array<OpenAI.Chat.Completions.ChatCompletionMessageParam>> => {
+  context: string,
+  breakingChangeHints: BreakingChangeHint[] = []
+): Promise<Array<Message>> => {
+  const hintsText = config.OCO_BREAKING_CHANGE
+    ? formatBreakingChangeHints(breakingChangeHints)
+    : '';
+
   switch (config.OCO_PROMPT_MODULE) {
     case '@commitlint':
       if (!(await utils.commitlintLLMConfigExists())) {
@@ -245,7 +281,8 @@ export const getMainCommitPrompt = async (
       return [
         commitlintPrompts.INIT_MAIN_PROMPT(
           translation.localLanguage,
-          commitLintConfig.prompts
+          commitLintConfig.prompts,
+          hintsText
         ),
         INIT_DIFF_PROMPT,
         INIT_CONSISTENCY_PROMPT(
@@ -257,7 +294,12 @@ export const getMainCommitPrompt = async (
 
     default:
       return [
-        INIT_MAIN_PROMPT(translation.localLanguage, fullGitMojiSpec, context),
+        INIT_MAIN_PROMPT(
+          translation.localLanguage,
+          fullGitMojiSpec,
+          context,
+          hintsText
+        ),
         INIT_DIFF_PROMPT,
         INIT_CONSISTENCY_PROMPT(translation)
       ];

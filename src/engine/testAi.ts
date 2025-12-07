@@ -1,6 +1,4 @@
-import { OpenAI } from 'openai';
-
-import { AiEngine } from './Engine';
+import { AiEngineConfig } from './Engine';
 
 export const TEST_MOCK_TYPES = [
   'commit-message',
@@ -9,24 +7,17 @@ export const TEST_MOCK_TYPES = [
 
 export type TestMockType = (typeof TEST_MOCK_TYPES)[number];
 
-type TestAiEngine = Partial<AiEngine> & {
+export class TestAi {
   mockType: TestMockType;
-};
-
-export class TestAi implements TestAiEngine {
-  mockType: TestMockType;
-
-  // those are not used in the test engine
-  config: any;
-  client: any;
-  // ---
+  config: AiEngineConfig | null = null;
+  client: unknown = null;
 
   constructor(mockType: TestMockType) {
     this.mockType = mockType;
   }
 
   async generateCommitMessage(
-    _messages: Array<OpenAI.Chat.Completions.ChatCompletionMessageParam>
+    _messages: Array<{ role: string; content: string }>
   ): Promise<string | undefined> {
     switch (this.mockType) {
       case 'commit-message':

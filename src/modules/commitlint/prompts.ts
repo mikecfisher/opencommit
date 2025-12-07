@@ -1,5 +1,4 @@
 import chalk from 'chalk';
-import { OpenAI } from 'openai';
 
 import { outro } from '@clack/prompts';
 import {
@@ -12,6 +11,11 @@ import {
 import { getConfig } from '../../commands/config';
 import { i18n, I18nLocals } from '../../i18n';
 import { IDENTITY, INIT_DIFF_PROMPT } from '../../prompts';
+
+interface Message {
+  role: string;
+  content: string;
+}
 
 const config = getConfig();
 const translation = i18n[(config.OCO_LANGUAGE as I18nLocals) || 'en'];
@@ -213,9 +217,7 @@ const STRUCTURE_OF_COMMIT = config.OCO_OMIT_SCOPE
 - Description of commit is composed of body and footer (optional): <body-of-commit>\n<footer(s)-of-commit>`;
 
 // Prompt to generate LLM-readable rules based on @commitlint rules.
-const GEN_COMMITLINT_CONSISTENCY_PROMPT = (
-  prompts: string[]
-): OpenAI.Chat.Completions.ChatCompletionMessageParam[] => [
+const GEN_COMMITLINT_CONSISTENCY_PROMPT = (prompts: string[]): Message[] => [
   {
     role: 'system',
     content: `${IDENTITY} Your mission is to create clean and comprehensive commit messages for two different changes in a single codebase and output them in the provided JSON format: one for a bug fix and another for a new feature.
@@ -256,17 +258,25 @@ Example Git Diff is to follow:`
   INIT_DIFF_PROMPT
 ];
 
+const BREAKING_CHANGE_INSTRUCTION = `
+BREAKING CHANGES: If the diff contains breaking changes (removed public APIs, changed function signatures, removed exports, renamed public interfaces, or other backwards-incompatible changes), you MUST:
+1. Use an exclamation mark after the type/scope (e.g., "feat!:" or "refactor(api)!:")
+2. Add a "BREAKING CHANGE:" footer at the end of the commit message explaining what breaks and how to migrate
+`;
+
 /**
  * Prompt to have LLM generate a message using @commitlint rules.
  *
  * @param language
  * @param prompts
+ * @param breakingChangeHints
  * @returns
  */
 const INIT_MAIN_PROMPT = (
   language: string,
-  prompts: string[]
-): OpenAI.Chat.Completions.ChatCompletionMessageParam => ({
+  prompts: string[],
+  breakingChangeHints: string = ''
+): Message => ({
   role: 'system',
   content: `${IDENTITY} Your mission is to create clean and comprehensive commit messages in the given @commitlint convention and explain WHAT were the changes ${
     config.OCO_WHY ? 'and WHY the changes were done' : ''
@@ -292,11 +302,12 @@ ${
     ? 'Do not include a scope in the commit message format. Use the format: <type>: <subject>'
     : ''
 }
+${config.OCO_BREAKING_CHANGE ? BREAKING_CHANGE_INSTRUCTION : ''}
 You will strictly follow the following conventions to generate the content of the commit message:
 - ${prompts.join('\n- ')}
 
 The conventions refers to the following structure of commit message:
-${STRUCTURE_OF_COMMIT}`
+${STRUCTURE_OF_COMMIT}${breakingChangeHints}`
 });
 
 export const commitlintPrompts = {

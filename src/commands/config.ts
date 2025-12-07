@@ -28,7 +28,9 @@ export enum CONFIG_KEYS {
   OCO_API_CUSTOM_HEADERS = 'OCO_API_CUSTOM_HEADERS',
   OCO_OMIT_SCOPE = 'OCO_OMIT_SCOPE',
   OCO_GITPUSH = 'OCO_GITPUSH', // todo: deprecate
-  OCO_HOOK_AUTO_UNCOMMENT = 'OCO_HOOK_AUTO_UNCOMMENT'
+  OCO_HOOK_AUTO_UNCOMMENT = 'OCO_HOOK_AUTO_UNCOMMENT',
+  OCO_REASONING_EFFORT = 'OCO_REASONING_EFFORT',
+  OCO_BREAKING_CHANGE = 'OCO_BREAKING_CHANGE'
 }
 
 export enum CONFIG_MODES {
@@ -39,16 +41,22 @@ export enum CONFIG_MODES {
 
 export const MODEL_LIST = {
   openai: [
+    // O-series reasoning models
+    'o1',
+    'o1-mini',
+    'o1-preview',
+    'o3',
+    'o3-mini',
+    'o3-mini-high',
+    'o3-pro',
+    'o4-mini',
+    'o4-mini-high',
+    // GPT-4o series
     'gpt-4o-mini',
-    'gpt-3.5-turbo',
-    'gpt-3.5-turbo-instruct',
-    'gpt-3.5-turbo-0613',
-    'gpt-3.5-turbo-0301',
-    'gpt-3.5-turbo-1106',
-    'gpt-3.5-turbo-0125',
-    'gpt-3.5-turbo-16k',
-    'gpt-3.5-turbo-16k-0613',
-    'gpt-3.5-turbo-16k-0301',
+    'gpt-4o',
+    'gpt-4o-2024-05-13',
+    'gpt-4o-mini-2024-07-18',
+    // GPT-4 series
     'gpt-4',
     'gpt-4-0314',
     'gpt-4-0613',
@@ -62,9 +70,16 @@ export const MODEL_LIST = {
     'gpt-4-32k',
     'gpt-4-32k-0314',
     'gpt-4-32k-0613',
-    'gpt-4o',
-    'gpt-4o-2024-05-13',
-    'gpt-4o-mini-2024-07-18'
+    // GPT-3.5 series (legacy)
+    'gpt-3.5-turbo',
+    'gpt-3.5-turbo-instruct',
+    'gpt-3.5-turbo-0613',
+    'gpt-3.5-turbo-0301',
+    'gpt-3.5-turbo-1106',
+    'gpt-3.5-turbo-0125',
+    'gpt-3.5-turbo-16k',
+    'gpt-3.5-turbo-16k-0613',
+    'gpt-3.5-turbo-16k-0301'
   ],
 
   anthropic: [
@@ -827,6 +842,27 @@ export const configValidators = {
       typeof value === 'boolean',
       'Must be true or false'
     );
+  },
+
+  [CONFIG_KEYS.OCO_REASONING_EFFORT](value: any) {
+    const validValues = ['none', 'low', 'medium', 'high'];
+    validateConfig(
+      CONFIG_KEYS.OCO_REASONING_EFFORT,
+      validValues.includes(value),
+      `Must be one of: ${validValues.join(
+        ', '
+      )}. This setting only applies to GPT-5 and reasoning models.`
+    );
+    return value;
+  },
+
+  [CONFIG_KEYS.OCO_BREAKING_CHANGE](value: any) {
+    validateConfig(
+      CONFIG_KEYS.OCO_BREAKING_CHANGE,
+      typeof value === 'boolean',
+      'Must be true or false'
+    );
+    return value;
   }
 };
 
@@ -845,6 +881,8 @@ export enum OCO_AI_PROVIDER_ENUM {
   AIMLAPI = 'aimlapi',
   OPENROUTER = 'openrouter'
 }
+
+export type ReasoningEffort = 'none' | 'low' | 'medium' | 'high';
 
 export type ConfigType = {
   [CONFIG_KEYS.OCO_API_KEY]?: string;
@@ -865,6 +903,8 @@ export type ConfigType = {
   [CONFIG_KEYS.OCO_OMIT_SCOPE]: boolean;
   [CONFIG_KEYS.OCO_TEST_MOCK_TYPE]: string;
   [CONFIG_KEYS.OCO_HOOK_AUTO_UNCOMMENT]: boolean;
+  [CONFIG_KEYS.OCO_REASONING_EFFORT]?: ReasoningEffort;
+  [CONFIG_KEYS.OCO_BREAKING_CHANGE]: boolean;
 };
 
 export const defaultConfigPath = pathJoin(homedir(), '.opencommit');
@@ -913,7 +953,9 @@ export const DEFAULT_CONFIG = {
   OCO_WHY: false,
   OCO_OMIT_SCOPE: false,
   OCO_GITPUSH: true, // todo: deprecate
-  OCO_HOOK_AUTO_UNCOMMENT: false
+  OCO_HOOK_AUTO_UNCOMMENT: false,
+  OCO_REASONING_EFFORT: 'low' as ReasoningEffort,
+  OCO_BREAKING_CHANGE: true
 };
 
 const initGlobalConfig = (configPath: string = defaultConfigPath) => {
@@ -954,7 +996,9 @@ const getEnvConfig = (envPath: string) => {
     OCO_TEST_MOCK_TYPE: process.env.OCO_TEST_MOCK_TYPE,
     OCO_OMIT_SCOPE: parseConfigVarValue(process.env.OCO_OMIT_SCOPE),
 
-    OCO_GITPUSH: parseConfigVarValue(process.env.OCO_GITPUSH) // todo: deprecate
+    OCO_GITPUSH: parseConfigVarValue(process.env.OCO_GITPUSH), // todo: deprecate
+    OCO_REASONING_EFFORT: process.env.OCO_REASONING_EFFORT as ReasoningEffort,
+    OCO_BREAKING_CHANGE: parseConfigVarValue(process.env.OCO_BREAKING_CHANGE)
   };
 };
 
@@ -1170,6 +1214,18 @@ function getConfigKeyDetails(key) {
         description: 'Automatically uncomment the commit message in the hook',
         values: ['true', 'false']
       };
+    case CONFIG_KEYS.OCO_REASONING_EFFORT:
+      return {
+        description:
+          'Reasoning effort level for GPT-5 and reasoning models (o1, o3, o4). Higher effort = better quality but slower and more expensive.',
+        values: ['none', 'low', 'medium', 'high']
+      };
+    case CONFIG_KEYS.OCO_BREAKING_CHANGE:
+      return {
+        description:
+          'Automatically detect and flag breaking changes in commit messages. Analyzes diffs for removed exports, changed signatures, and API modifications.',
+        values: ['true', 'false']
+      };
     default:
       return {
         description: 'String value',
@@ -1280,14 +1336,28 @@ export const configCommand = command(
         }
         const config = getConfig() || {};
         for (const key of keyValues) {
-          outro(`${key}=${config[key as keyof typeof config]}`);
+          // Normalize key to OCO_ prefix format
+          const normalizedKey = key.startsWith('OCO_')
+            ? key
+            : `OCO_${key.toUpperCase()}`;
+          outro(
+            `${normalizedKey}=${config[normalizedKey as keyof typeof config]}`
+          );
         }
       } else if (mode === CONFIG_MODES.set) {
         if (!keyValues || keyValues.length === 0) {
           throw new Error('No config keys specified for set mode');
         }
         await setConfig(
-          keyValues.map((keyValue) => keyValue.split('=') as [string, string])
+          keyValues.map((keyValue) => {
+            const [key, ...valueParts] = keyValue.split('=');
+            const value = valueParts.join('='); // Handle values with = in them
+            // Normalize key to OCO_ prefix format
+            const normalizedKey = key.startsWith('OCO_')
+              ? key
+              : `OCO_${key.toUpperCase()}`;
+            return [normalizedKey, value] as [string, string];
+          })
         );
       } else {
         throw new Error(
