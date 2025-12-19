@@ -5,6 +5,7 @@ import {
   BreakingChangeHint
 } from './utils/breakingChange';
 import { getEngine } from './utils/engine';
+import { debug } from './utils/logger';
 import { mergeDiffs } from './utils/mergeDiffs';
 import { tokenCount } from './utils/tokenCount';
 
@@ -53,11 +54,24 @@ export const generateCommitMessageByDiff = async (
   fullGitMojiSpec: boolean = false,
   context: string = ''
 ): Promise<string> => {
+  const diffTokens = tokenCount(diff);
+
+  debug('generateCommitMessage', 'Starting', {
+    diffLength: diff.length,
+    diffTokens,
+    hasContext: context.length > 0
+  });
+
   try {
     // Analyze diff for breaking changes if enabled
     const breakingChangeHints = config.OCO_BREAKING_CHANGE
       ? analyzeBreakingChanges(diff)
       : [];
+
+    debug('generateCommitMessage', 'Breaking change analysis', {
+      enabled: config.OCO_BREAKING_CHANGE,
+      hintsFound: breakingChangeHints.length
+    });
 
     const INIT_MESSAGES_PROMPT = await getMainCommitPrompt(
       fullGitMojiSpec,
@@ -75,13 +89,28 @@ export const generateCommitMessageByDiff = async (
       INIT_MESSAGES_PROMPT_LENGTH -
       MAX_TOKENS_OUTPUT;
 
+    debug('generateCommitMessage', 'Token calculation', {
+      maxInput: MAX_TOKENS_INPUT,
+      maxOutput: MAX_TOKENS_OUTPUT,
+      promptTokens: INIT_MESSAGES_PROMPT_LENGTH,
+      maxRequestTokens: MAX_REQUEST_TOKENS,
+      diffTokens,
+      willSplit: diffTokens >= MAX_REQUEST_TOKENS
+    });
+
     if (tokenCount(diff) >= MAX_REQUEST_TOKENS) {
+      debug('generateCommitMessage', 'Splitting diff into multiple requests');
+
       const commitMessagePromises = await getCommitMsgsPromisesFromFileDiffs(
         diff,
         MAX_REQUEST_TOKENS,
         fullGitMojiSpec,
         breakingChangeHints
       );
+
+      debug('generateCommitMessage', 'Split complete', {
+        numRequests: commitMessagePromises.length
+      });
 
       const commitMessages = [] as string[];
       for (const promise of commitMessagePromises) {
@@ -99,11 +128,19 @@ export const generateCommitMessageByDiff = async (
       breakingChangeHints
     );
 
+    debug('generateCommitMessage', 'Calling engine', {
+      messageCount: messages.length
+    });
+
     const engine = await getEngine();
     const commitMessage = await engine.generateCommitMessage(messages);
 
     if (!commitMessage)
       throw new Error(GenerateCommitMessageErrorEnum.emptyMessage);
+
+    debug('generateCommitMessage', 'Success', {
+      messageLength: commitMessage.length
+    });
 
     return commitMessage;
   } catch (error) {

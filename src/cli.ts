@@ -8,7 +8,9 @@ import { commitlintConfigCommand } from './commands/commitlint';
 import { configCommand } from './commands/config';
 import { hookCommand, isHookCalled } from './commands/githook.js';
 import { prepareCommitMessageHook } from './commands/prepare-commit-msg-hook';
+import { setupCommand } from './commands/wizard';
 import { checkIsLatestVersion } from './utils/checkIsLatestVersion';
+import { enableDebug, debug } from './utils/logger';
 import { runMigrations } from './migrations/_run.js';
 
 const extraArgs = process.argv.slice(2);
@@ -17,8 +19,19 @@ cli(
   {
     version: packageJSON.version,
     name: 'opencommit',
-    commands: [configCommand, hookCommand, commitlintConfigCommand],
+    commands: [
+      configCommand,
+      hookCommand,
+      commitlintConfigCommand,
+      setupCommand
+    ],
     flags: {
+      debug: {
+        type: Boolean,
+        alias: 'd',
+        description: 'Enable debug logging to ~/.opencommit/debug.log',
+        default: false
+      },
       fgm: {
         type: Boolean,
         description: 'Use full GitMoji specification',
@@ -41,6 +54,11 @@ cli(
     help: { description: packageJSON.description }
   },
   async ({ flags }) => {
+    if (flags.debug) {
+      enableDebug();
+      debug('cli', 'OpenCommit started', { version: packageJSON.version });
+    }
+
     await runMigrations();
     await checkIsLatestVersion();
 

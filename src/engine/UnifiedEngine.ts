@@ -13,6 +13,7 @@ import { AiEngineConfig } from './Engine';
 import { removeContentTags } from '../utils/removeContentTags';
 import { tokenCount } from '../utils/tokenCount';
 import { GenerateCommitMessageErrorEnum } from '../generateCommitMessageFromGitDiff';
+import { debug, error as logError } from '../utils/logger';
 
 export interface UnifiedEngineConfig extends AiEngineConfig {
   provider: OCO_AI_PROVIDER_ENUM;
@@ -57,6 +58,12 @@ export class UnifiedEngine {
       .map((msg) => tokenCount(msg.content) + 4)
       .reduce((a, b) => a + b, 0);
 
+    debug('UnifiedEngine', 'Token validation', {
+      requestTokens,
+      maxInput: this.config.maxTokensInput,
+      maxOutput: this.config.maxTokensOutput
+    });
+
     if (
       requestTokens >
       this.config.maxTokensInput - this.config.maxTokensOutput
@@ -72,6 +79,15 @@ export class UnifiedEngine {
       content: msg.content
     }));
 
+    debug('UnifiedEngine', 'Starting API call', {
+      provider: this.config.provider,
+      model: this.config.model,
+      messageCount: messages.length,
+      requestTokens
+    });
+
+    const startTime = Date.now();
+
     try {
       const result = await generateText({
         model,
@@ -80,9 +96,21 @@ export class UnifiedEngine {
         ...this.getGenerationOptions()
       });
 
+      const duration = Date.now() - startTime;
+      debug('UnifiedEngine', 'API call complete', {
+        duration: `${duration}ms`,
+        responseLength: result.text.length,
+        finishReason: result.finishReason
+      });
+
       return removeContentTags(result.text, 'think');
     } catch (error) {
+      const duration = Date.now() - startTime;
       const err = error as Error;
+      logError('UnifiedEngine', 'API call failed', {
+        duration: `${duration}ms`,
+        error: err.message
+      });
       throw new Error(`${this.config.provider} error: ${err.message}`);
     }
   }

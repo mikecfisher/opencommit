@@ -90,8 +90,19 @@ export const MODEL_LIST = {
   ],
 
   gemini: [
+    // Gemini 2.5 series (recommended - fast and capable)
+    'gemini-2.5-flash',
+    'gemini-2.5-pro',
+    'gemini-2.5-flash-lite-preview',
+    // Gemini 3 series (preview)
+    'gemini-3-flash-preview',
+    'gemini-3-pro-preview',
+    // Gemini 2.0 series
+    'gemini-2.0-flash',
+    // Gemini 1.5 series (legacy)
     'gemini-1.5-flash',
     'gemini-1.5-pro',
+    // Legacy
     'gemini-1.0-pro',
     'gemini-pro-vision',
     'text-embedding-004'
@@ -613,7 +624,7 @@ const getDefaultModel = (provider: string | undefined): string => {
 };
 
 export enum DEFAULT_TOKEN_LIMITS {
-  DEFAULT_MAX_TOKENS_INPUT = 4096,
+  DEFAULT_MAX_TOKENS_INPUT = 32000,
   DEFAULT_MAX_TOKENS_OUTPUT = 500
 }
 

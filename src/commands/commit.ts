@@ -18,6 +18,7 @@ import {
   getStagedFiles,
   gitAdd
 } from '../utils/git';
+import { debug } from '../utils/logger';
 import { trytm } from '../utils/trytm';
 import { getConfig } from './config';
 
@@ -53,15 +54,29 @@ const generateCommitMessageFromGitDiff = async ({
   skipCommitConfirmation = false
 }: GenerateCommitMessageFromGitDiffParams): Promise<void> => {
   await assertGitRepo();
+
+  debug('commit', 'Starting commit message generation', {
+    diffLength: diff.length,
+    hasContext: context.length > 0,
+    fullGitMojiSpec,
+    skipCommitConfirmation
+  });
+
   const commitGenerationSpinner = spinner();
   commitGenerationSpinner.start('Generating the commit message');
 
   try {
+    debug('commit', 'Calling generateCommitMessageByDiff');
+
     let commitMessage = await generateCommitMessageByDiff(
       diff,
       fullGitMojiSpec,
       context
     );
+
+    debug('commit', 'Received commit message', {
+      messageLength: commitMessage.length
+    });
 
     const messageTemplate = checkMessageTemplate(extraArgs);
     if (
@@ -226,6 +241,14 @@ export async function commit(
   fullGitMojiSpec: boolean = false,
   skipCommitConfirmation: boolean = false
 ) {
+  debug('commit', 'Commit function called', {
+    extraArgsCount: extraArgs.length,
+    hasContext: context.length > 0,
+    isStageAllFlag,
+    fullGitMojiSpec,
+    skipCommitConfirmation
+  });
+
   if (isStageAllFlag) {
     const changedFiles = await getChangedFiles();
 

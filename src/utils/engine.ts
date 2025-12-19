@@ -1,6 +1,7 @@
 import { getConfig, OCO_AI_PROVIDER_ENUM } from '../commands/config';
 import { FlowiseEngine } from '../engine/flowise';
 import { TestAi, TestMockType } from '../engine/testAi';
+import { debug } from './logger';
 
 // Lazy import for UnifiedEngine to avoid loading AI SDK unless needed
 type UnifiedEngineType = import('../engine/UnifiedEngine').UnifiedEngine;
@@ -33,12 +34,19 @@ export async function getEngine(): Promise<AiEngine> {
   const config = getConfig();
   const provider = config.OCO_AI_PROVIDER;
 
+  debug('engine', 'Getting engine', {
+    provider,
+    model: config.OCO_MODEL
+  });
+
   // Special cases that don't use AI SDK
   if (provider === OCO_AI_PROVIDER_ENUM.TEST) {
+    debug('engine', 'Using TestAi engine');
     return new TestAi(config.OCO_TEST_MOCK_TYPE as TestMockType);
   }
 
   if (provider === OCO_AI_PROVIDER_ENUM.FLOWISE) {
+    debug('engine', 'Using FlowiseEngine');
     return new FlowiseEngine({
       model: config.OCO_MODEL,
       maxTokensOutput: config.OCO_TOKENS_MAX_OUTPUT,
@@ -49,7 +57,16 @@ export async function getEngine(): Promise<AiEngine> {
   }
 
   // Lazy load UnifiedEngine for all AI SDK providers (including OpenAI)
+  debug('engine', 'Loading UnifiedEngine');
   const { UnifiedEngine } = await import('../engine/UnifiedEngine');
+
+  debug('engine', 'UnifiedEngine loaded', {
+    provider,
+    model: config.OCO_MODEL,
+    hasApiKey: Boolean(config.OCO_API_KEY),
+    hasBaseURL: Boolean(config.OCO_API_URL)
+  });
+
   return new UnifiedEngine({
     provider,
     model: config.OCO_MODEL,

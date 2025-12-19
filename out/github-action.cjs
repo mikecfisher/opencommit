@@ -713,7 +713,7 @@ var require_tunnel = __commonJS({
         connectOptions.headers = connectOptions.headers || {};
         connectOptions.headers["Proxy-Authorization"] = "Basic " + new Buffer(connectOptions.proxyAuth).toString("base64");
       }
-      debug("making CONNECT request");
+      debug2("making CONNECT request");
       var connectReq = self2.request(connectOptions);
       connectReq.useChunkedEncodingByDefault = false;
       connectReq.once("response", onResponse);
@@ -733,40 +733,40 @@ var require_tunnel = __commonJS({
         connectReq.removeAllListeners();
         socket.removeAllListeners();
         if (res.statusCode !== 200) {
-          debug(
+          debug2(
             "tunneling socket could not be established, statusCode=%d",
             res.statusCode
           );
           socket.destroy();
-          var error40 = new Error("tunneling socket could not be established, statusCode=" + res.statusCode);
-          error40.code = "ECONNRESET";
-          options.request.emit("error", error40);
+          var error41 = new Error("tunneling socket could not be established, statusCode=" + res.statusCode);
+          error41.code = "ECONNRESET";
+          options.request.emit("error", error41);
           self2.removeSocket(placeholder);
           return;
         }
         if (head.length > 0) {
-          debug("got illegal response body from proxy");
+          debug2("got illegal response body from proxy");
           socket.destroy();
-          var error40 = new Error("got illegal response body from proxy");
-          error40.code = "ECONNRESET";
-          options.request.emit("error", error40);
+          var error41 = new Error("got illegal response body from proxy");
+          error41.code = "ECONNRESET";
+          options.request.emit("error", error41);
           self2.removeSocket(placeholder);
           return;
         }
-        debug("tunneling connection has established");
+        debug2("tunneling connection has established");
         self2.sockets[self2.sockets.indexOf(placeholder)] = socket;
         return cb(socket);
       }
       function onError(cause) {
         connectReq.removeAllListeners();
-        debug(
+        debug2(
           "tunneling socket could not be established, cause=%s\n",
           cause.message,
           cause.stack
         );
-        var error40 = new Error("tunneling socket could not be established, cause=" + cause.message);
-        error40.code = "ECONNRESET";
-        options.request.emit("error", error40);
+        var error41 = new Error("tunneling socket could not be established, cause=" + cause.message);
+        error41.code = "ECONNRESET";
+        options.request.emit("error", error41);
         self2.removeSocket(placeholder);
       }
     };
@@ -821,9 +821,9 @@ var require_tunnel = __commonJS({
       }
       return target;
     }
-    var debug;
+    var debug2;
     if (process.env.NODE_DEBUG && /\btunnel\b/.test(process.env.NODE_DEBUG)) {
-      debug = function() {
+      debug2 = function() {
         var args = Array.prototype.slice.call(arguments);
         if (typeof args[0] === "string") {
           args[0] = "TUNNEL: " + args[0];
@@ -833,10 +833,10 @@ var require_tunnel = __commonJS({
         console.error.apply(console, args);
       };
     } else {
-      debug = function() {
+      debug2 = function() {
       };
     }
-    exports2.debug = debug;
+    exports2.debug = debug2;
   }
 });
 
@@ -5894,7 +5894,7 @@ Content-Type: ${value.type || "application/octet-stream"}\r
         throw new TypeError("Body is unusable");
       }
       const promise2 = createDeferredPromise();
-      const errorSteps = (error40) => promise2.reject(error40);
+      const errorSteps = (error41) => promise2.reject(error41);
       const successSteps = (data) => {
         try {
           promise2.resolve(convertBytesToJSValue(data));
@@ -6180,16 +6180,16 @@ var require_request = __commonJS({
           this.onError(err);
         }
       }
-      onError(error40) {
+      onError(error41) {
         this.onFinally();
         if (channels.error.hasSubscribers) {
-          channels.error.publish({ request: this, error: error40 });
+          channels.error.publish({ request: this, error: error41 });
         }
         if (this.aborted) {
           return;
         }
         this.aborted = true;
-        return this[kHandler].onError(error40);
+        return this[kHandler].onError(error41);
       }
       onFinally() {
         if (this.errorHandler) {
@@ -7052,8 +7052,8 @@ var require_RedirectHandler = __commonJS({
       onUpgrade(statusCode, headers, socket) {
         this.handler.onUpgrade(statusCode, headers, socket);
       }
-      onError(error40) {
-        this.handler.onError(error40);
+      onError(error41) {
+        this.handler.onError(error41);
       }
       onHeaders(statusCode, headers, resume, statusText) {
         this.location = this.history.length >= this.maxRedirections || util4.isDisturbed(this.opts.body) ? null : parseLocation(statusCode, headers);
@@ -9194,7 +9194,7 @@ var require_pool = __commonJS({
         this[kOptions] = { ...util4.deepClone(options), connect, allowH2 };
         this[kOptions].interceptors = options.interceptors ? { ...options.interceptors } : void 0;
         this[kFactory] = factory6;
-        this.on("connectionError", (origin3, targets, error40) => {
+        this.on("connectionError", (origin3, targets, error41) => {
           for (const target of targets) {
             const idx = this[kClients].indexOf(target);
             if (idx !== -1) {
@@ -10803,13 +10803,13 @@ var require_mock_utils = __commonJS({
       if (mockDispatch2.data.callback) {
         mockDispatch2.data = { ...mockDispatch2.data, ...mockDispatch2.data.callback(opts) };
       }
-      const { data: { statusCode, data, headers, trailers, error: error40 }, delay: delay3, persist } = mockDispatch2;
+      const { data: { statusCode, data, headers, trailers, error: error41 }, delay: delay3, persist } = mockDispatch2;
       const { timesInvoked, times } = mockDispatch2;
       mockDispatch2.consumed = !persist && timesInvoked >= times;
       mockDispatch2.pending = timesInvoked < times;
-      if (error40 !== null) {
+      if (error41 !== null) {
         deleteMockDispatch(this[kDispatches], key);
-        handler.onError(error40);
+        handler.onError(error41);
         return true;
       }
       if (typeof delay3 === "number" && delay3 > 0) {
@@ -10847,19 +10847,19 @@ var require_mock_utils = __commonJS({
         if (agent.isMockActive) {
           try {
             mockDispatch.call(this, opts, handler);
-          } catch (error40) {
-            if (error40 instanceof MockNotMatchedError) {
+          } catch (error41) {
+            if (error41 instanceof MockNotMatchedError) {
               const netConnect = agent[kGetNetConnect]();
               if (netConnect === false) {
-                throw new MockNotMatchedError(`${error40.message}: subsequent request to origin ${origin2} was not allowed (net.connect disabled)`);
+                throw new MockNotMatchedError(`${error41.message}: subsequent request to origin ${origin2} was not allowed (net.connect disabled)`);
               }
               if (checkNetConnect(netConnect, origin2)) {
                 originalDispatch.call(this, opts, handler);
               } else {
-                throw new MockNotMatchedError(`${error40.message}: subsequent request to origin ${origin2} was not allowed (net.connect is not enabled for this origin)`);
+                throw new MockNotMatchedError(`${error41.message}: subsequent request to origin ${origin2} was not allowed (net.connect is not enabled for this origin)`);
               }
             } else {
-              throw error40;
+              throw error41;
             }
           }
         } else {
@@ -11022,11 +11022,11 @@ var require_mock_interceptor = __commonJS({
       /**
        * Mock an undici request with a defined error.
        */
-      replyWithError(error40) {
-        if (typeof error40 === "undefined") {
+      replyWithError(error41) {
+        if (typeof error41 === "undefined") {
           throw new InvalidArgumentError4("error must be defined");
         }
-        const newMockDispatch = addMockDispatch(this[kDispatches], this[kDispatchKey], { error: error40 });
+        const newMockDispatch = addMockDispatch(this[kDispatches], this[kDispatchKey], { error: error41 });
         return new MockScope(newMockDispatch);
       }
       /**
@@ -13353,17 +13353,17 @@ var require_fetch = __commonJS({
         this.emit("terminated", reason);
       }
       // https://fetch.spec.whatwg.org/#fetch-controller-abort
-      abort(error40) {
+      abort(error41) {
         if (this.state !== "ongoing") {
           return;
         }
         this.state = "aborted";
-        if (!error40) {
-          error40 = new DOMException2("The operation was aborted.", "AbortError");
+        if (!error41) {
+          error41 = new DOMException2("The operation was aborted.", "AbortError");
         }
-        this.serializedAbortReason = error40;
-        this.connection?.destroy(error40);
-        this.emit("terminated", error40);
+        this.serializedAbortReason = error41;
+        this.connection?.destroy(error41);
+        this.emit("terminated", error41);
       }
     };
     function fetch2(input, init = {}) {
@@ -13467,13 +13467,13 @@ var require_fetch = __commonJS({
         performance.markResourceTiming(timingInfo, originalURL.href, initiatorType, globalThis2, cacheState);
       }
     }
-    function abortFetch(p2, request, responseObject, error40) {
-      if (!error40) {
-        error40 = new DOMException2("The operation was aborted.", "AbortError");
+    function abortFetch(p2, request, responseObject, error41) {
+      if (!error41) {
+        error41 = new DOMException2("The operation was aborted.", "AbortError");
       }
-      p2.reject(error40);
+      p2.reject(error41);
       if (request.body != null && isReadable(request.body?.stream)) {
-        request.body.stream.cancel(error40).catch((err) => {
+        request.body.stream.cancel(error41).catch((err) => {
           if (err.code === "ERR_INVALID_STATE") {
             return;
           }
@@ -13485,7 +13485,7 @@ var require_fetch = __commonJS({
       }
       const response = responseObject[kState];
       if (response.body != null && isReadable(response.body?.stream)) {
-        response.body.stream.cancel(error40).catch((err) => {
+        response.body.stream.cancel(error41).catch((err) => {
           if (err.code === "ERR_INVALID_STATE") {
             return;
           }
@@ -14265,13 +14265,13 @@ var require_fetch = __commonJS({
               fetchParams.controller.ended = true;
               this.body.push(null);
             },
-            onError(error40) {
+            onError(error41) {
               if (this.abort) {
                 fetchParams.controller.off("terminated", this.abort);
               }
-              this.body?.destroy(error40);
-              fetchParams.controller.terminate(error40);
-              reject(error40);
+              this.body?.destroy(error41);
+              fetchParams.controller.terminate(error41);
+              reject(error41);
             },
             onUpgrade(status, headersList, socket) {
               if (status !== 101) {
@@ -14737,8 +14737,8 @@ var require_util4 = __commonJS({
                   }
                   fr[kResult] = result;
                   fireAProgressEvent("load", fr);
-                } catch (error40) {
-                  fr[kError] = error40;
+                } catch (error41) {
+                  fr[kError] = error41;
                   fireAProgressEvent("error", fr);
                 }
                 if (fr[kState] !== "loading") {
@@ -14747,13 +14747,13 @@ var require_util4 = __commonJS({
               });
               break;
             }
-          } catch (error40) {
+          } catch (error41) {
             if (fr[kAborted]) {
               return;
             }
             queueMicrotask(() => {
               fr[kState] = "done";
-              fr[kError] = error40;
+              fr[kError] = error41;
               fireAProgressEvent("error", fr);
               if (fr[kState] !== "loading") {
                 fireAProgressEvent("loadend", fr);
@@ -16753,11 +16753,11 @@ var require_connection = __commonJS({
         });
       }
     }
-    function onSocketError(error40) {
+    function onSocketError(error41) {
       const { ws } = this;
       ws[kReadyState] = states.CLOSING;
       if (channels.socketError.hasSubscribers) {
-        channels.socketError.publish(error40);
+        channels.socketError.publish(error41);
       }
       this.destroy();
     }
@@ -18389,12 +18389,12 @@ var require_oidc_utils = __commonJS({
         var _a18;
         return __awaiter(this, void 0, void 0, function* () {
           const httpclient = _OidcClient.createHttpClient();
-          const res = yield httpclient.getJson(id_token_url).catch((error40) => {
+          const res = yield httpclient.getJson(id_token_url).catch((error41) => {
             throw new Error(`Failed to get ID Token. 
  
-        Error Code : ${error40.statusCode}
+        Error Code : ${error41.statusCode}
  
-        Error Message: ${error40.message}`);
+        Error Message: ${error41.message}`);
           });
           const id_token = (_a18 = res.result) === null || _a18 === void 0 ? void 0 : _a18.value;
           if (!id_token) {
@@ -18415,8 +18415,8 @@ var require_oidc_utils = __commonJS({
             const id_token = yield _OidcClient.getCall(id_token_url);
             core_1.setSecret(id_token);
             return id_token;
-          } catch (error40) {
-            throw new Error(`Error message: ${error40.message}`);
+          } catch (error41) {
+            throw new Error(`Error message: ${error41.message}`);
           }
         });
       }
@@ -18901,21 +18901,21 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
     exports2.setCommandEcho = setCommandEcho;
     function setFailed(message) {
       process.exitCode = ExitCode.Failure;
-      error40(message);
+      error41(message);
     }
     exports2.setFailed = setFailed;
     function isDebug() {
       return process.env["RUNNER_DEBUG"] === "1";
     }
     exports2.isDebug = isDebug;
-    function debug(message) {
+    function debug2(message) {
       command_1.issueCommand("debug", {}, message);
     }
-    exports2.debug = debug;
-    function error40(message, properties = {}) {
+    exports2.debug = debug2;
+    function error41(message, properties = {}) {
       command_1.issueCommand("error", utils_1.toCommandProperties(properties), message instanceof Error ? message.toString() : message);
     }
-    exports2.error = error40;
+    exports2.error = error41;
     function warning(message, properties = {}) {
       command_1.issueCommand("warning", utils_1.toCommandProperties(properties), message instanceof Error ? message.toString() : message);
     }
@@ -19758,7 +19758,7 @@ var require_toolrunner = __commonJS({
               this._debug(`STDIO streams have closed for tool '${this.toolPath}'`);
               state.CheckComplete();
             });
-            state.on("done", (error40, exitCode) => {
+            state.on("done", (error41, exitCode) => {
               if (stdbuffer.length > 0) {
                 this.emit("stdline", stdbuffer);
               }
@@ -19766,8 +19766,8 @@ var require_toolrunner = __commonJS({
                 this.emit("errline", errbuffer);
               }
               cp.removeAllListeners();
-              if (error40) {
-                reject(error40);
+              if (error41) {
+                reject(error41);
               } else {
                 resolve2(exitCode);
               }
@@ -19862,14 +19862,14 @@ var require_toolrunner = __commonJS({
         this.emit("debug", message);
       }
       _setResult() {
-        let error40;
+        let error41;
         if (this.processExited) {
           if (this.processError) {
-            error40 = new Error(`There was an error when attempting to execute the process '${this.toolPath}'. This may indicate the process failed to start. Error: ${this.processError}`);
+            error41 = new Error(`There was an error when attempting to execute the process '${this.toolPath}'. This may indicate the process failed to start. Error: ${this.processError}`);
           } else if (this.processExitCode !== 0 && !this.options.ignoreReturnCode) {
-            error40 = new Error(`The process '${this.toolPath}' failed with exit code ${this.processExitCode}`);
+            error41 = new Error(`The process '${this.toolPath}' failed with exit code ${this.processExitCode}`);
           } else if (this.processStderr && this.options.failOnStdErr) {
-            error40 = new Error(`The process '${this.toolPath}' failed because one or more lines were written to the STDERR stream`);
+            error41 = new Error(`The process '${this.toolPath}' failed because one or more lines were written to the STDERR stream`);
           }
         }
         if (this.timeout) {
@@ -19877,7 +19877,7 @@ var require_toolrunner = __commonJS({
           this.timeout = null;
         }
         this.done = true;
-        this.emit("done", error40, this.processExitCode);
+        this.emit("done", error41, this.processExitCode);
       }
       static HandleTimeout(state) {
         if (state.done) {
@@ -20228,8 +20228,8 @@ var require_add = __commonJS({
       }
       if (kind === "error") {
         hook = function(method, options) {
-          return Promise.resolve().then(method.bind(null, options)).catch(function(error40) {
-            return orig(error40, options);
+          return Promise.resolve().then(method.bind(null, options)).catch(function(error41) {
+            return orig(error41, options);
           });
         };
       }
@@ -20961,7 +20961,7 @@ var require_dist_node5 = __commonJS({
         }
         if (status >= 400) {
           const data = await getResponseData(response);
-          const error40 = new import_request_error.RequestError(toErrorMessage(data), status, {
+          const error41 = new import_request_error.RequestError(toErrorMessage(data), status, {
             response: {
               url: url3,
               status,
@@ -20970,7 +20970,7 @@ var require_dist_node5 = __commonJS({
             },
             request: requestOptions
           });
-          throw error40;
+          throw error41;
         }
         return parseSuccessResponseBody ? await getResponseData(response) : response.body;
       }).then((data) => {
@@ -20980,17 +20980,17 @@ var require_dist_node5 = __commonJS({
           headers,
           data
         };
-      }).catch((error40) => {
-        if (error40 instanceof import_request_error.RequestError)
-          throw error40;
-        else if (error40.name === "AbortError")
-          throw error40;
-        let message = error40.message;
-        if (error40.name === "TypeError" && "cause" in error40) {
-          if (error40.cause instanceof Error) {
-            message = error40.cause.message;
-          } else if (typeof error40.cause === "string") {
-            message = error40.cause;
+      }).catch((error41) => {
+        if (error41 instanceof import_request_error.RequestError)
+          throw error41;
+        else if (error41.name === "AbortError")
+          throw error41;
+        let message = error41.message;
+        if (error41.name === "TypeError" && "cause" in error41) {
+          if (error41.cause instanceof Error) {
+            message = error41.cause.message;
+          } else if (typeof error41.cause === "string") {
+            message = error41.cause;
           }
         }
         throw new import_request_error.RequestError(message, 500, {
@@ -23655,9 +23655,9 @@ var require_dist_node10 = __commonJS({
                 /<([^<>]+)>;\s*rel="next"/
               ) || [])[1];
               return { value: normalizedResponse };
-            } catch (error40) {
-              if (error40.status !== 409)
-                throw error40;
+            } catch (error41) {
+              if (error41.status !== 409)
+                throw error41;
               url3 = "";
               return {
                 value: {
@@ -25118,9 +25118,9 @@ var require_main2 = __commonJS({
           const attrs = _instructions(result, key);
           decrypted = DotenvModule.decrypt(attrs.ciphertext, attrs.key);
           break;
-        } catch (error40) {
+        } catch (error41) {
           if (i2 + 1 >= length) {
-            throw error40;
+            throw error41;
           }
         }
       }
@@ -25148,13 +25148,13 @@ var require_main2 = __commonJS({
       let uri;
       try {
         uri = new URL(dotenvKey);
-      } catch (error40) {
-        if (error40.code === "ERR_INVALID_URL") {
+      } catch (error41) {
+        if (error41.code === "ERR_INVALID_URL") {
           const err = new Error("INVALID_DOTENV_KEY: Wrong format. Must be in valid uri format like dotenv://:key_1234@dotenvx.com/vault/.env.vault?environment=development");
           err.code = "INVALID_DOTENV_KEY";
           throw err;
         }
-        throw error40;
+        throw error41;
       }
       const key = uri.password;
       if (!key) {
@@ -25213,11 +25213,11 @@ var require_main2 = __commonJS({
     function configDotenv(options) {
       const dotenvPath = path2.resolve(process.cwd(), ".env");
       let encoding = "utf8";
-      const debug = Boolean(options && options.debug);
+      const debug2 = Boolean(options && options.debug);
       if (options && options.encoding) {
         encoding = options.encoding;
       } else {
-        if (debug) {
+        if (debug2) {
           _debug("No encoding is specified. UTF-8 is used by default");
         }
       }
@@ -25239,7 +25239,7 @@ var require_main2 = __commonJS({
           const parsed = DotenvModule.parse(fs3.readFileSync(path3, { encoding }));
           DotenvModule.populate(parsedAll, parsed, options);
         } catch (e2) {
-          if (debug) {
+          if (debug2) {
             _debug(`Failed to load ${path3} ${e2.message}`);
           }
           lastError = e2;
@@ -25277,10 +25277,10 @@ var require_main2 = __commonJS({
         const aesgcm = crypto6.createDecipheriv("aes-256-gcm", key, nonce);
         aesgcm.setAuthTag(authTag);
         return `${aesgcm.update(ciphertext)}${aesgcm.final()}`;
-      } catch (error40) {
-        const isRange = error40 instanceof RangeError;
-        const invalidKeyLength = error40.message === "Invalid key length";
-        const decryptionFailed = error40.message === "Unsupported state or unable to authenticate data";
+      } catch (error41) {
+        const isRange = error41 instanceof RangeError;
+        const invalidKeyLength = error41.message === "Invalid key length";
+        const decryptionFailed = error41.message === "Unsupported state or unable to authenticate data";
         if (isRange || invalidKeyLength) {
           const err = new Error("INVALID_DOTENV_KEY: It must be 64 characters long (or more)");
           err.code = "INVALID_DOTENV_KEY";
@@ -25290,12 +25290,12 @@ var require_main2 = __commonJS({
           err.code = "DECRYPTION_FAILED";
           throw err;
         } else {
-          throw error40;
+          throw error41;
         }
       }
     }
     function populate(processEnv, parsed, options = {}) {
-      const debug = Boolean(options && options.debug);
+      const debug2 = Boolean(options && options.debug);
       const override = Boolean(options && options.override);
       if (typeof parsed !== "object") {
         const err = new Error("OBJECT_REQUIRED: Please check the processEnv argument being passed to populate");
@@ -25307,7 +25307,7 @@ var require_main2 = __commonJS({
           if (override === true) {
             processEnv[key] = parsed[key];
           }
-          if (debug) {
+          if (debug2) {
             if (override === true) {
               _debug(`"${key}" is already defined and WAS overwritten`);
             } else {
@@ -26175,8 +26175,19 @@ var init_config = __esm({
         "claude-3-haiku-20240307"
       ],
       gemini: [
+        // Gemini 2.5 series (recommended - fast and capable)
+        "gemini-2.5-flash",
+        "gemini-2.5-pro",
+        "gemini-2.5-flash-lite-preview",
+        // Gemini 3 series (preview)
+        "gemini-3-flash-preview",
+        "gemini-3-pro-preview",
+        // Gemini 2.0 series
+        "gemini-2.0-flash",
+        // Gemini 1.5 series (legacy)
         "gemini-1.5-flash",
         "gemini-1.5-pro",
+        // Legacy
         "gemini-1.0-pro",
         "gemini-pro-vision",
         "text-embedding-004"
@@ -26737,7 +26748,7 @@ var init_config = __esm({
             JSON.parse(value);
           }
           return value;
-        } catch (error40) {
+        } catch (error41) {
           validateConfig(
             "OCO_API_CUSTOM_HEADERS" /* OCO_API_CUSTOM_HEADERS */,
             false,
@@ -26933,7 +26944,7 @@ var init_config = __esm({
       return OCO_PROMPT_MODULE_ENUM2;
     })(OCO_PROMPT_MODULE_ENUM || {});
     DEFAULT_CONFIG = {
-      OCO_TOKENS_MAX_INPUT: 4096 /* DEFAULT_MAX_TOKENS_INPUT */,
+      OCO_TOKENS_MAX_INPUT: 32e3 /* DEFAULT_MAX_TOKENS_INPUT */,
       OCO_TOKENS_MAX_OUTPUT: 500 /* DEFAULT_MAX_TOKENS_OUTPUT */,
       OCO_DESCRIPTION: false,
       OCO_EMOJI: false,
@@ -26959,7 +26970,7 @@ var init_config = __esm({
     parseConfigVarValue = (value) => {
       try {
         return JSON.parse(value);
-      } catch (error40) {
+      } catch (error41) {
         return value;
       }
     };
@@ -27023,7 +27034,7 @@ var init_config = __esm({
               return [_2, parsedValue];
             }
             return [_2, v];
-          } catch (error40) {
+          } catch (error41) {
             return [_2, v];
           }
         })
@@ -27059,7 +27070,7 @@ For more help refer to our docs: https://github.com/di-sukharev/opencommit`
         try {
           if (typeof value === "string") parsedConfigValue = JSON.parse(value);
           else parsedConfigValue = value;
-        } catch (error40) {
+        } catch (error41) {
           parsedConfigValue = value;
         }
         const validValue = configValidators[key](
@@ -27126,8 +27137,8 @@ For more help refer to our docs: https://github.com/di-sukharev/opencommit`
               `Unsupported mode: ${mode}. Valid modes are: "set", "get", and "describe"`
             );
           }
-        } catch (error40) {
-          ce(`${source_default.red("\u2716")} ${error40}`);
+        } catch (error41) {
+          ce(`${source_default.red("\u2716")} ${error41}`);
           process.exit(1);
         }
       }
@@ -27584,16 +27595,16 @@ var init_AxiosError = __esm({
     });
     Object.defineProperties(AxiosError, descriptors);
     Object.defineProperty(prototype, "isAxiosError", { value: true });
-    AxiosError.from = (error40, code, config7, request, response, customProps) => {
+    AxiosError.from = (error41, code, config7, request, response, customProps) => {
       const axiosError = Object.create(prototype);
-      utils_default.toFlatObject(error40, axiosError, function filter4(obj) {
+      utils_default.toFlatObject(error41, axiosError, function filter4(obj) {
         return obj !== Error.prototype;
       }, (prop) => {
         return prop !== "isAxiosError";
       });
-      AxiosError.call(axiosError, error40.message, code, config7, request, response);
-      axiosError.cause = error40;
-      axiosError.name = error40.name;
+      AxiosError.call(axiosError, error41.message, code, config7, request, response);
+      axiosError.cause = error41;
+      axiosError.name = error41.name;
       customProps && Object.assign(axiosError, customProps);
       return axiosError;
     };
@@ -36545,17 +36556,17 @@ var require_iterate = __commonJS({
     module2.exports = iterate;
     function iterate(list, iterator2, state, callback) {
       var key = state["keyedList"] ? state["keyedList"][state.index] : state.index;
-      state.jobs[key] = runJob(iterator2, key, list[key], function(error40, output) {
+      state.jobs[key] = runJob(iterator2, key, list[key], function(error41, output) {
         if (!(key in state.jobs)) {
           return;
         }
         delete state.jobs[key];
-        if (error40) {
+        if (error41) {
           abort(state);
         } else {
           state.results[key] = output;
         }
-        callback(error40, state.results);
+        callback(error41, state.results);
       });
     }
     function runJob(iterator2, key, item, callback) {
@@ -36619,9 +36630,9 @@ var require_parallel = __commonJS({
     function parallel(list, iterator2, callback) {
       var state = initState(list);
       while (state.index < (state["keyedList"] || list).length) {
-        iterate(list, iterator2, state, function(error40, result) {
-          if (error40) {
-            callback(error40, result);
+        iterate(list, iterator2, state, function(error41, result) {
+          if (error41) {
+            callback(error41, result);
             return;
           }
           if (Object.keys(state.jobs).length === 0) {
@@ -36647,9 +36658,9 @@ var require_serialOrdered = __commonJS({
     module2.exports.descending = descending;
     function serialOrdered(list, iterator2, sortMethod, callback) {
       var state = initState(list, sortMethod);
-      iterate(list, iterator2, state, function iteratorHandler(error40, result) {
-        if (error40) {
-          callback(error40, result);
+      iterate(list, iterator2, state, function iteratorHandler(error41, result) {
+        if (error41) {
+          callback(error41, result);
           return;
         }
         state.index++;
@@ -36993,10 +37004,10 @@ var require_form_data = __commonJS({
         this.pipe(request);
         if (cb) {
           var onResponse;
-          var callback = function(error40, responce) {
+          var callback = function(error41, responce) {
             request.removeListener("error", callback);
             request.removeListener("response", onResponse);
-            return cb.call(this, error40, responce);
+            return cb.call(this, error41, responce);
           };
           onResponse = callback.bind(this, null);
           request.on("error", callback);
@@ -38211,11 +38222,11 @@ var require_common = __commonJS({
         let enableOverride = null;
         let namespacesCache;
         let enabledCache;
-        function debug(...args) {
-          if (!debug.enabled) {
+        function debug2(...args) {
+          if (!debug2.enabled) {
             return;
           }
-          const self2 = debug;
+          const self2 = debug2;
           const curr = Number(/* @__PURE__ */ new Date());
           const ms = curr - (prevTime || curr);
           self2.diff = ms;
@@ -38245,12 +38256,12 @@ var require_common = __commonJS({
           const logFn = self2.log || createDebug.log;
           logFn.apply(self2, args);
         }
-        debug.namespace = namespace;
-        debug.useColors = createDebug.useColors();
-        debug.color = createDebug.selectColor(namespace);
-        debug.extend = extend3;
-        debug.destroy = createDebug.destroy;
-        Object.defineProperty(debug, "enabled", {
+        debug2.namespace = namespace;
+        debug2.useColors = createDebug.useColors();
+        debug2.color = createDebug.selectColor(namespace);
+        debug2.extend = extend3;
+        debug2.destroy = createDebug.destroy;
+        Object.defineProperty(debug2, "enabled", {
           enumerable: true,
           configurable: false,
           get: () => {
@@ -38268,9 +38279,9 @@ var require_common = __commonJS({
           }
         });
         if (typeof createDebug.init === "function") {
-          createDebug.init(debug);
+          createDebug.init(debug2);
         }
-        return debug;
+        return debug2;
       }
       function extend3(namespace, delimiter) {
         const newDebug = createDebug(this.namespace + (typeof delimiter === "undefined" ? ":" : delimiter) + namespace);
@@ -38479,14 +38490,14 @@ var require_browser = __commonJS({
         } else {
           exports2.storage.removeItem("debug");
         }
-      } catch (error40) {
+      } catch (error41) {
       }
     }
     function load() {
       let r2;
       try {
         r2 = exports2.storage.getItem("debug");
-      } catch (error40) {
+      } catch (error41) {
       }
       if (!r2 && typeof process !== "undefined" && "env" in process) {
         r2 = process.env.DEBUG;
@@ -38496,7 +38507,7 @@ var require_browser = __commonJS({
     function localstorage() {
       try {
         return localStorage;
-      } catch (error40) {
+      } catch (error41) {
       }
     }
     module2.exports = require_common()(exports2);
@@ -38504,8 +38515,8 @@ var require_browser = __commonJS({
     formatters.j = function(v) {
       try {
         return JSON.stringify(v);
-      } catch (error40) {
-        return "[UnexpectedJSONParseError]: " + error40.message;
+      } catch (error41) {
+        return "[UnexpectedJSONParseError]: " + error41.message;
       }
     };
   }
@@ -38725,7 +38736,7 @@ var require_node = __commonJS({
           221
         ];
       }
-    } catch (error40) {
+    } catch (error41) {
     }
     exports2.inspectOpts = Object.keys(process.env).filter((key) => {
       return /^debug_/i.test(key);
@@ -38780,11 +38791,11 @@ var require_node = __commonJS({
     function load() {
       return process.env.DEBUG;
     }
-    function init(debug) {
-      debug.inspectOpts = {};
+    function init(debug2) {
+      debug2.inspectOpts = {};
       const keys = Object.keys(exports2.inspectOpts);
       for (let i2 = 0; i2 < keys.length; i2++) {
-        debug.inspectOpts[keys[i2]] = exports2.inspectOpts[keys[i2]];
+        debug2.inspectOpts[keys[i2]] = exports2.inspectOpts[keys[i2]];
       }
     }
     module2.exports = require_common()(exports2);
@@ -38814,19 +38825,19 @@ var require_src2 = __commonJS({
 // node_modules/follow-redirects/debug.js
 var require_debug = __commonJS({
   "node_modules/follow-redirects/debug.js"(exports2, module2) {
-    var debug;
+    var debug2;
     module2.exports = function() {
-      if (!debug) {
+      if (!debug2) {
         try {
-          debug = require_src2()("follow-redirects");
-        } catch (error40) {
+          debug2 = require_src2()("follow-redirects");
+        } catch (error41) {
         }
-        if (typeof debug !== "function") {
-          debug = function() {
+        if (typeof debug2 !== "function") {
+          debug2 = function() {
           };
         }
       }
-      debug.apply(null, arguments);
+      debug2.apply(null, arguments);
     };
   }
 });
@@ -38840,12 +38851,12 @@ var require_follow_redirects = __commonJS({
     var https2 = require("https");
     var Writable = require("stream").Writable;
     var assert2 = require("assert");
-    var debug = require_debug();
+    var debug2 = require_debug();
     var useNativeURL = false;
     try {
       assert2(new URL3());
-    } catch (error40) {
-      useNativeURL = error40.code === "ERR_INVALID_URL";
+    } catch (error41) {
+      useNativeURL = error41.code === "ERR_INVALID_URL";
     }
     var preservedUrlFields = [
       "auth",
@@ -38919,9 +38930,9 @@ var require_follow_redirects = __commonJS({
       this._currentRequest.abort();
       this.emit("abort");
     };
-    RedirectableRequest.prototype.destroy = function(error40) {
-      destroyRequest(this._currentRequest, error40);
-      destroy.call(this, error40);
+    RedirectableRequest.prototype.destroy = function(error41) {
+      destroyRequest(this._currentRequest, error41);
+      destroy.call(this, error41);
       return this;
     };
     RedirectableRequest.prototype.write = function(data, encoding, callback) {
@@ -39088,10 +39099,10 @@ var require_follow_redirects = __commonJS({
         var i2 = 0;
         var self2 = this;
         var buffers = this._requestBodyBuffers;
-        (function writeNext(error40) {
+        (function writeNext(error41) {
           if (request === self2._currentRequest) {
-            if (error40) {
-              self2.emit("error", error40);
+            if (error41) {
+              self2.emit("error", error41);
             } else if (i2 < buffers.length) {
               var buffer = buffers[i2++];
               if (!request.finished) {
@@ -39149,7 +39160,7 @@ var require_follow_redirects = __commonJS({
       var currentHost = currentHostHeader || currentUrlParts.host;
       var currentUrl = /^\w+:/.test(location) ? this._currentUrl : url3.format(Object.assign(currentUrlParts, { host: currentHost }));
       var redirectUrl = resolveUrl(location, currentUrl);
-      debug("redirecting to", redirectUrl.href);
+      debug2("redirecting to", redirectUrl.href);
       this._isRedirect = true;
       spreadUrlObject(redirectUrl, this._options);
       if (redirectUrl.protocol !== currentUrlParts.protocol && redirectUrl.protocol !== "https:" || redirectUrl.host !== currentHost && !isSubdomain(redirectUrl.host, currentHost)) {
@@ -39203,7 +39214,7 @@ var require_follow_redirects = __commonJS({
             options.hostname = "::1";
           }
           assert2.equal(options.protocol, protocol, "protocol mismatch");
-          debug("options", options);
+          debug2("options", options);
           return new RedirectableRequest(options, callback);
         }
         function get(input, options, callback) {
@@ -39288,12 +39299,12 @@ var require_follow_redirects = __commonJS({
       });
       return CustomError;
     }
-    function destroyRequest(request, error40) {
+    function destroyRequest(request, error41) {
       for (var event of events) {
         request.removeListener(event, eventHandlers[event]);
       }
       request.on("error", noop4);
-      request.destroy(error40);
+      request.destroy(error41);
     }
     function isSubdomain(subdomain, domain2) {
       assert2(isString2(subdomain) && isString2(domain2));
@@ -41273,15 +41284,15 @@ var init_Axios = __esm({
           const onRejected = requestInterceptorChain[i2++];
           try {
             newConfig = onFulfilled(newConfig);
-          } catch (error40) {
-            onRejected.call(this, error40);
+          } catch (error41) {
+            onRejected.call(this, error41);
             break;
           }
         }
         try {
           promise2 = dispatchRequest.call(this, newConfig);
-        } catch (error40) {
-          return Promise.reject(error40);
+        } catch (error41) {
+          return Promise.reject(error41);
         }
         i2 = 0;
         len = responseInterceptorChain.length;
@@ -41680,8 +41691,8 @@ var init_flowise = __esm({
           const content = message?.text;
           return removeContentTags(content, "think");
         } catch (err) {
-          const error40 = err;
-          const message = error40.response?.data?.error ?? error40.message;
+          const error41 = err;
+          const message = error41.response?.data?.error ?? error41.message;
           throw new Error("local model issues. details: " + message);
         }
       }
@@ -41689,18 +41700,67 @@ var init_flowise = __esm({
   }
 });
 
+// src/utils/logger.ts
+function getElapsedTime() {
+  const elapsed = (Date.now() - sessionStartTime) / 1e3;
+  return `+${elapsed.toFixed(3)}s`;
+}
+function writeLog(level, context2, message, data) {
+  if (!debugEnabled) return;
+  const timestamp = (/* @__PURE__ */ new Date()).toISOString();
+  const dataStr = data !== void 0 ? ` ${JSON.stringify(data)}` : "";
+  const logLine = `[${timestamp}] [${level}] [${context2}] ${message}${dataStr}
+`;
+  try {
+    (0, import_fs2.appendFileSync)(LOG_PATH, logLine);
+  } catch {
+  }
+  const levelColor = {
+    DEBUG: source_default.gray,
+    INFO: source_default.blue,
+    WARN: source_default.yellow,
+    ERROR: source_default.red
+  };
+  const elapsed = source_default.dim(`[${getElapsedTime()}]`);
+  const coloredLevel = levelColor[level](`[${level}]`);
+  const coloredContext = source_default.cyan(`[${context2}]`);
+  console.error(
+    `${elapsed} ${coloredLevel} ${coloredContext} ${message}${dataStr}`
+  );
+}
+function debug(context2, message, data) {
+  writeLog("DEBUG", context2, message, data);
+}
+function error(context2, message, data) {
+  writeLog("ERROR", context2, message, data);
+}
+var import_fs2, import_os2, import_path2, LOG_DIR, LOG_PATH, debugEnabled, sessionStartTime;
+var init_logger = __esm({
+  "src/utils/logger.ts"() {
+    "use strict";
+    import_fs2 = require("fs");
+    import_os2 = require("os");
+    import_path2 = require("path");
+    init_source();
+    LOG_DIR = (0, import_path2.join)((0, import_os2.homedir)(), ".opencommit");
+    LOG_PATH = (0, import_path2.join)(LOG_DIR, "debug.log");
+    debugEnabled = false;
+    sessionStartTime = 0;
+  }
+});
+
 // node_modules/@ai-sdk/provider/dist/index.mjs
-function getErrorMessage(error40) {
-  if (error40 == null) {
+function getErrorMessage(error41) {
+  if (error41 == null) {
     return "unknown error";
   }
-  if (typeof error40 === "string") {
-    return error40;
+  if (typeof error41 === "string") {
+    return error41;
   }
-  if (error40 instanceof Error) {
-    return error40.message;
+  if (error41 instanceof Error) {
+    return error41.message;
   }
-  return JSON.stringify(error40);
+  return JSON.stringify(error41);
 }
 var marker, symbol, _a, _AISDKError, AISDKError, name, marker2, symbol2, _a2, APICallError, name2, marker3, symbol3, _a3, EmptyResponseBodyError, name3, marker4, symbol4, _a4, InvalidArgumentError, name4, marker5, symbol5, _a5, InvalidPromptError, name5, marker6, symbol6, _a6, InvalidResponseDataError, name6, marker7, symbol7, _a7, JSONParseError, name7, marker8, symbol8, _a8, LoadAPIKeyError, name8, marker9, symbol9, _a9, LoadSettingError, name9, marker10, symbol10, _a10, name10, marker11, symbol11, _a11, NoSuchModelError, name11, marker12, symbol12, _a12, TooManyEmbeddingValuesForCallError, name12, marker13, symbol13, _a13, _TypeValidationError, TypeValidationError, name13, marker14, symbol14, _a14, UnsupportedFunctionalityError;
 var init_dist6 = __esm({
@@ -41731,12 +41791,12 @@ var init_dist6 = __esm({
        * @param {unknown} error - The error to check.
        * @returns {boolean} True if the error is an AI SDK Error, false otherwise.
        */
-      static isInstance(error40) {
-        return _AISDKError2.hasMarker(error40, marker);
+      static isInstance(error41) {
+        return _AISDKError2.hasMarker(error41, marker);
       }
-      static hasMarker(error40, marker153) {
+      static hasMarker(error41, marker153) {
         const markerSymbol = Symbol.for(marker153);
-        return error40 != null && typeof error40 === "object" && markerSymbol in error40 && typeof error40[markerSymbol] === "boolean" && error40[markerSymbol] === true;
+        return error41 != null && typeof error41 === "object" && markerSymbol in error41 && typeof error41[markerSymbol] === "boolean" && error41[markerSymbol] === true;
       }
     };
     _a = symbol;
@@ -41770,8 +41830,8 @@ var init_dist6 = __esm({
         this.isRetryable = isRetryable;
         this.data = data;
       }
-      static isInstance(error40) {
-        return AISDKError.hasMarker(error40, marker2);
+      static isInstance(error41) {
+        return AISDKError.hasMarker(error41, marker2);
       }
     };
     _a2 = symbol2;
@@ -41784,8 +41844,8 @@ var init_dist6 = __esm({
         super({ name: name2, message });
         this[_a3] = true;
       }
-      static isInstance(error40) {
-        return AISDKError.hasMarker(error40, marker3);
+      static isInstance(error41) {
+        return AISDKError.hasMarker(error41, marker3);
       }
     };
     _a3 = symbol3;
@@ -41802,8 +41862,8 @@ var init_dist6 = __esm({
         this[_a4] = true;
         this.argument = argument;
       }
-      static isInstance(error40) {
-        return AISDKError.hasMarker(error40, marker4);
+      static isInstance(error41) {
+        return AISDKError.hasMarker(error41, marker4);
       }
     };
     _a4 = symbol4;
@@ -41820,8 +41880,8 @@ var init_dist6 = __esm({
         this[_a5] = true;
         this.prompt = prompt;
       }
-      static isInstance(error40) {
-        return AISDKError.hasMarker(error40, marker5);
+      static isInstance(error41) {
+        return AISDKError.hasMarker(error41, marker5);
       }
     };
     _a5 = symbol5;
@@ -41837,8 +41897,8 @@ var init_dist6 = __esm({
         this[_a6] = true;
         this.data = data;
       }
-      static isInstance(error40) {
-        return AISDKError.hasMarker(error40, marker6);
+      static isInstance(error41) {
+        return AISDKError.hasMarker(error41, marker6);
       }
     };
     _a6 = symbol6;
@@ -41856,8 +41916,8 @@ Error message: ${getErrorMessage(cause)}`,
         this[_a7] = true;
         this.text = text2;
       }
-      static isInstance(error40) {
-        return AISDKError.hasMarker(error40, marker7);
+      static isInstance(error41) {
+        return AISDKError.hasMarker(error41, marker7);
       }
     };
     _a7 = symbol7;
@@ -41870,8 +41930,8 @@ Error message: ${getErrorMessage(cause)}`,
         super({ name: name7, message });
         this[_a8] = true;
       }
-      static isInstance(error40) {
-        return AISDKError.hasMarker(error40, marker8);
+      static isInstance(error41) {
+        return AISDKError.hasMarker(error41, marker8);
       }
     };
     _a8 = symbol8;
@@ -41884,8 +41944,8 @@ Error message: ${getErrorMessage(cause)}`,
         super({ name: name8, message });
         this[_a9] = true;
       }
-      static isInstance(error40) {
-        return AISDKError.hasMarker(error40, marker9);
+      static isInstance(error41) {
+        return AISDKError.hasMarker(error41, marker9);
       }
     };
     _a9 = symbol9;
@@ -41908,8 +41968,8 @@ Error message: ${getErrorMessage(cause)}`,
         this.modelId = modelId;
         this.modelType = modelType;
       }
-      static isInstance(error40) {
-        return AISDKError.hasMarker(error40, marker11);
+      static isInstance(error41) {
+        return AISDKError.hasMarker(error41, marker11);
       }
     };
     _a11 = symbol11;
@@ -41928,8 +41988,8 @@ Error message: ${getErrorMessage(cause)}`,
         this.maxEmbeddingsPerCall = options.maxEmbeddingsPerCall;
         this.values = options.values;
       }
-      static isInstance(error40) {
-        return AISDKError.hasMarker(error40, marker12);
+      static isInstance(error41) {
+        return AISDKError.hasMarker(error41, marker12);
       }
     };
     _a12 = symbol12;
@@ -41947,8 +42007,8 @@ Error message: ${getErrorMessage(cause)}`,
         this[_a13] = true;
         this.value = value;
       }
-      static isInstance(error40) {
-        return AISDKError.hasMarker(error40, marker13);
+      static isInstance(error41) {
+        return AISDKError.hasMarker(error41, marker13);
       }
       /**
        * Wraps an error into a TypeValidationError.
@@ -41981,8 +42041,8 @@ Error message: ${getErrorMessage(cause)}`,
         this[_a14] = true;
         this.functionality = functionality;
       }
-      static isInstance(error40) {
-        return AISDKError.hasMarker(error40, marker14);
+      static isInstance(error41) {
+        return AISDKError.hasMarker(error41, marker14);
       }
     };
     _a14 = symbol14;
@@ -42111,8 +42171,8 @@ var init_stream = __esm({
               onEvent: (event) => {
                 controller.enqueue(event);
               },
-              onError(error40) {
-                onError === "terminate" ? controller.error(error40) : typeof onError == "function" && onError(error40);
+              onError(error41) {
+                onError === "terminate" ? controller.error(error41) : typeof onError == "function" && onError(error41);
               },
               onRetry,
               onComment
@@ -42719,10 +42779,10 @@ var init_util = __esm({
 });
 
 // node_modules/zod/v4/core/errors.js
-function flattenError(error40, mapper = (issue2) => issue2.message) {
+function flattenError(error41, mapper = (issue2) => issue2.message) {
   const fieldErrors = {};
   const formErrors = [];
-  for (const sub of error40.issues) {
+  for (const sub of error41.issues) {
     if (sub.path.length > 0) {
       fieldErrors[sub.path[0]] = fieldErrors[sub.path[0]] || [];
       fieldErrors[sub.path[0]].push(mapper(sub));
@@ -42732,13 +42792,13 @@ function flattenError(error40, mapper = (issue2) => issue2.message) {
   }
   return { formErrors, fieldErrors };
 }
-function formatError(error40, _mapper) {
+function formatError(error41, _mapper) {
   const mapper = _mapper || function(issue2) {
     return issue2.message;
   };
   const fieldErrors = { _errors: [] };
-  const processError = (error41) => {
-    for (const issue2 of error41.issues) {
+  const processError = (error42) => {
+    for (const issue2 of error42.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
         issue2.errors.map((issues) => processError({ issues }));
       } else if (issue2.code === "invalid_key") {
@@ -42765,17 +42825,17 @@ function formatError(error40, _mapper) {
       }
     }
   };
-  processError(error40);
+  processError(error41);
   return fieldErrors;
 }
-function treeifyError(error40, _mapper) {
+function treeifyError(error41, _mapper) {
   const mapper = _mapper || function(issue2) {
     return issue2.message;
   };
   const result = { errors: [] };
-  const processError = (error41, path2 = []) => {
+  const processError = (error42, path2 = []) => {
     var _a18, _b8;
-    for (const issue2 of error41.issues) {
+    for (const issue2 of error42.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
         issue2.errors.map((issues) => processError({ issues }, issue2.path));
       } else if (issue2.code === "invalid_key") {
@@ -42810,7 +42870,7 @@ function treeifyError(error40, _mapper) {
       }
     }
   };
-  processError(error40);
+  processError(error41);
   return result;
 }
 function toDotPath(path2) {
@@ -42830,9 +42890,9 @@ function toDotPath(path2) {
   }
   return segs.join("");
 }
-function prettifyError(error40) {
+function prettifyError(error41) {
   const lines = [];
-  const issues = [...error40.issues].sort((a2, b2) => a2.path.length - b2.path.length);
+  const issues = [...error41.issues].sort((a2, b2) => a2.path.length - b2.path.length);
   for (const issue2 of issues) {
     lines.push(`\u2716 ${issue2.message}`);
     if (issue2.path?.length)
@@ -45292,14 +45352,14 @@ var init_schemas = __esm({
 // node_modules/zod/v4/locales/ar.js
 function ar_default() {
   return {
-    localeError: error()
+    localeError: error2()
   };
 }
-var error;
+var error2;
 var init_ar = __esm({
   "node_modules/zod/v4/locales/ar.js"() {
     init_util();
-    error = () => {
+    error2 = () => {
       const Sizable = {
         string: { unit: "\u062D\u0631\u0641", verb: "\u0623\u0646 \u064A\u062D\u0648\u064A" },
         file: { unit: "\u0628\u0627\u064A\u062A", verb: "\u0623\u0646 \u064A\u062D\u0648\u064A" },
@@ -45415,14 +45475,14 @@ var init_ar = __esm({
 // node_modules/zod/v4/locales/az.js
 function az_default() {
   return {
-    localeError: error2()
+    localeError: error3()
   };
 }
-var error2;
+var error3;
 var init_az = __esm({
   "node_modules/zod/v4/locales/az.js"() {
     init_util();
-    error2 = () => {
+    error3 = () => {
       const Sizable = {
         string: { unit: "simvol", verb: "olmal\u0131d\u0131r" },
         file: { unit: "bayt", verb: "olmal\u0131d\u0131r" },
@@ -45552,14 +45612,14 @@ function getBelarusianPlural(count, one, few, many) {
 }
 function be_default() {
   return {
-    localeError: error3()
+    localeError: error4()
   };
 }
-var error3;
+var error4;
 var init_be = __esm({
   "node_modules/zod/v4/locales/be.js"() {
     init_util();
-    error3 = () => {
+    error4 = () => {
       const Sizable = {
         string: {
           unit: {
@@ -45708,14 +45768,14 @@ var init_be = __esm({
 // node_modules/zod/v4/locales/ca.js
 function ca_default() {
   return {
-    localeError: error4()
+    localeError: error5()
   };
 }
-var error4;
+var error5;
 var init_ca = __esm({
   "node_modules/zod/v4/locales/ca.js"() {
     init_util();
-    error4 = () => {
+    error5 = () => {
       const Sizable = {
         string: { unit: "car\xE0cters", verb: "contenir" },
         file: { unit: "bytes", verb: "contenir" },
@@ -45834,14 +45894,14 @@ var init_ca = __esm({
 // node_modules/zod/v4/locales/cs.js
 function cs_default2() {
   return {
-    localeError: error5()
+    localeError: error6()
   };
 }
-var error5;
+var error6;
 var init_cs2 = __esm({
   "node_modules/zod/v4/locales/cs.js"() {
     init_util();
-    error5 = () => {
+    error6 = () => {
       const Sizable = {
         string: { unit: "znak\u016F", verb: "m\xEDt" },
         file: { unit: "bajt\u016F", verb: "m\xEDt" },
@@ -45976,14 +46036,14 @@ var init_cs2 = __esm({
 // node_modules/zod/v4/locales/de.js
 function de_default2() {
   return {
-    localeError: error6()
+    localeError: error7()
   };
 }
-var error6;
+var error7;
 var init_de2 = __esm({
   "node_modules/zod/v4/locales/de.js"() {
     init_util();
-    error6 = () => {
+    error7 = () => {
       const Sizable = {
         string: { unit: "Zeichen", verb: "zu haben" },
         file: { unit: "Bytes", verb: "zu haben" },
@@ -46099,10 +46159,10 @@ var init_de2 = __esm({
 // node_modules/zod/v4/locales/en.js
 function en_default2() {
   return {
-    localeError: error7()
+    localeError: error8()
   };
 }
-var parsedType, error7;
+var parsedType, error8;
 var init_en2 = __esm({
   "node_modules/zod/v4/locales/en.js"() {
     init_util();
@@ -46126,7 +46186,7 @@ var init_en2 = __esm({
       }
       return t;
     };
-    error7 = () => {
+    error8 = () => {
       const Sizable = {
         string: { unit: "characters", verb: "to have" },
         file: { unit: "bytes", verb: "to have" },
@@ -46223,10 +46283,10 @@ var init_en2 = __esm({
 // node_modules/zod/v4/locales/eo.js
 function eo_default() {
   return {
-    localeError: error8()
+    localeError: error9()
   };
 }
-var parsedType2, error8;
+var parsedType2, error9;
 var init_eo = __esm({
   "node_modules/zod/v4/locales/eo.js"() {
     init_util();
@@ -46250,7 +46310,7 @@ var init_eo = __esm({
       }
       return t;
     };
-    error8 = () => {
+    error9 = () => {
       const Sizable = {
         string: { unit: "karaktrojn", verb: "havi" },
         file: { unit: "bajtojn", verb: "havi" },
@@ -46346,14 +46406,14 @@ var init_eo = __esm({
 // node_modules/zod/v4/locales/es.js
 function es_default() {
   return {
-    localeError: error9()
+    localeError: error10()
   };
 }
-var error9;
+var error10;
 var init_es = __esm({
   "node_modules/zod/v4/locales/es.js"() {
     init_util();
-    error9 = () => {
+    error10 = () => {
       const Sizable = {
         string: { unit: "caracteres", verb: "tener" },
         file: { unit: "bytes", verb: "tener" },
@@ -46470,14 +46530,14 @@ var init_es = __esm({
 // node_modules/zod/v4/locales/fa.js
 function fa_default() {
   return {
-    localeError: error10()
+    localeError: error11()
   };
 }
-var error10;
+var error11;
 var init_fa = __esm({
   "node_modules/zod/v4/locales/fa.js"() {
     init_util();
-    error10 = () => {
+    error11 = () => {
       const Sizable = {
         string: { unit: "\u06A9\u0627\u0631\u0627\u06A9\u062A\u0631", verb: "\u062F\u0627\u0634\u062A\u0647 \u0628\u0627\u0634\u062F" },
         file: { unit: "\u0628\u0627\u06CC\u062A", verb: "\u062F\u0627\u0634\u062A\u0647 \u0628\u0627\u0634\u062F" },
@@ -46599,14 +46659,14 @@ var init_fa = __esm({
 // node_modules/zod/v4/locales/fi.js
 function fi_default() {
   return {
-    localeError: error11()
+    localeError: error12()
   };
 }
-var error11;
+var error12;
 var init_fi = __esm({
   "node_modules/zod/v4/locales/fi.js"() {
     init_util();
-    error11 = () => {
+    error12 = () => {
       const Sizable = {
         string: { unit: "merkki\xE4", subject: "merkkijonon" },
         file: { unit: "tavua", subject: "tiedoston" },
@@ -46728,14 +46788,14 @@ var init_fi = __esm({
 // node_modules/zod/v4/locales/fr.js
 function fr_default2() {
   return {
-    localeError: error12()
+    localeError: error13()
   };
 }
-var error12;
+var error13;
 var init_fr2 = __esm({
   "node_modules/zod/v4/locales/fr.js"() {
     init_util();
-    error12 = () => {
+    error13 = () => {
       const Sizable = {
         string: { unit: "caract\xE8res", verb: "avoir" },
         file: { unit: "octets", verb: "avoir" },
@@ -46851,14 +46911,14 @@ var init_fr2 = __esm({
 // node_modules/zod/v4/locales/fr-CA.js
 function fr_CA_default() {
   return {
-    localeError: error13()
+    localeError: error14()
   };
 }
-var error13;
+var error14;
 var init_fr_CA = __esm({
   "node_modules/zod/v4/locales/fr-CA.js"() {
     init_util();
-    error13 = () => {
+    error14 = () => {
       const Sizable = {
         string: { unit: "caract\xE8res", verb: "avoir" },
         file: { unit: "octets", verb: "avoir" },
@@ -46975,14 +47035,14 @@ var init_fr_CA = __esm({
 // node_modules/zod/v4/locales/he.js
 function he_default() {
   return {
-    localeError: error14()
+    localeError: error15()
   };
 }
-var error14;
+var error15;
 var init_he = __esm({
   "node_modules/zod/v4/locales/he.js"() {
     init_util();
-    error14 = () => {
+    error15 = () => {
       const Sizable = {
         string: { unit: "\u05D0\u05D5\u05EA\u05D9\u05D5\u05EA", verb: "\u05DC\u05DB\u05DC\u05D5\u05DC" },
         file: { unit: "\u05D1\u05D9\u05D9\u05D8\u05D9\u05DD", verb: "\u05DC\u05DB\u05DC\u05D5\u05DC" },
@@ -47099,14 +47159,14 @@ var init_he = __esm({
 // node_modules/zod/v4/locales/hu.js
 function hu_default() {
   return {
-    localeError: error15()
+    localeError: error16()
   };
 }
-var error15;
+var error16;
 var init_hu = __esm({
   "node_modules/zod/v4/locales/hu.js"() {
     init_util();
-    error15 = () => {
+    error16 = () => {
       const Sizable = {
         string: { unit: "karakter", verb: "legyen" },
         file: { unit: "byte", verb: "legyen" },
@@ -47223,14 +47283,14 @@ var init_hu = __esm({
 // node_modules/zod/v4/locales/id.js
 function id_default() {
   return {
-    localeError: error16()
+    localeError: error17()
   };
 }
-var error16;
+var error17;
 var init_id = __esm({
   "node_modules/zod/v4/locales/id.js"() {
     init_util();
-    error16 = () => {
+    error17 = () => {
       const Sizable = {
         string: { unit: "karakter", verb: "memiliki" },
         file: { unit: "byte", verb: "memiliki" },
@@ -47346,14 +47406,14 @@ var init_id = __esm({
 // node_modules/zod/v4/locales/it.js
 function it_default2() {
   return {
-    localeError: error17()
+    localeError: error18()
   };
 }
-var error17;
+var error18;
 var init_it2 = __esm({
   "node_modules/zod/v4/locales/it.js"() {
     init_util();
-    error17 = () => {
+    error18 = () => {
       const Sizable = {
         string: { unit: "caratteri", verb: "avere" },
         file: { unit: "byte", verb: "avere" },
@@ -47470,14 +47530,14 @@ var init_it2 = __esm({
 // node_modules/zod/v4/locales/ja.js
 function ja_default2() {
   return {
-    localeError: error18()
+    localeError: error19()
   };
 }
-var error18;
+var error19;
 var init_ja2 = __esm({
   "node_modules/zod/v4/locales/ja.js"() {
     init_util();
-    error18 = () => {
+    error19 = () => {
       const Sizable = {
         string: { unit: "\u6587\u5B57", verb: "\u3067\u3042\u308B" },
         file: { unit: "\u30D0\u30A4\u30C8", verb: "\u3067\u3042\u308B" },
@@ -47592,14 +47652,14 @@ var init_ja2 = __esm({
 // node_modules/zod/v4/locales/kh.js
 function kh_default() {
   return {
-    localeError: error19()
+    localeError: error20()
   };
 }
-var error19;
+var error20;
 var init_kh = __esm({
   "node_modules/zod/v4/locales/kh.js"() {
     init_util();
-    error19 = () => {
+    error20 = () => {
       const Sizable = {
         string: { unit: "\u178F\u17BD\u17A2\u1780\u17D2\u179F\u179A", verb: "\u1782\u17BD\u179A\u1798\u17B6\u1793" },
         file: { unit: "\u1794\u17C3", verb: "\u1782\u17BD\u179A\u1798\u17B6\u1793" },
@@ -47716,14 +47776,14 @@ var init_kh = __esm({
 // node_modules/zod/v4/locales/ko.js
 function ko_default2() {
   return {
-    localeError: error20()
+    localeError: error21()
   };
 }
-var error20;
+var error21;
 var init_ko2 = __esm({
   "node_modules/zod/v4/locales/ko.js"() {
     init_util();
-    error20 = () => {
+    error21 = () => {
       const Sizable = {
         string: { unit: "\uBB38\uC790", verb: "to have" },
         file: { unit: "\uBC14\uC774\uD2B8", verb: "to have" },
@@ -47844,14 +47904,14 @@ var init_ko2 = __esm({
 // node_modules/zod/v4/locales/mk.js
 function mk_default() {
   return {
-    localeError: error21()
+    localeError: error22()
   };
 }
-var error21;
+var error22;
 var init_mk = __esm({
   "node_modules/zod/v4/locales/mk.js"() {
     init_util();
-    error21 = () => {
+    error22 = () => {
       const Sizable = {
         string: { unit: "\u0437\u043D\u0430\u0446\u0438", verb: "\u0434\u0430 \u0438\u043C\u0430\u0430\u0442" },
         file: { unit: "\u0431\u0430\u0458\u0442\u0438", verb: "\u0434\u0430 \u0438\u043C\u0430\u0430\u0442" },
@@ -47969,14 +48029,14 @@ var init_mk = __esm({
 // node_modules/zod/v4/locales/ms.js
 function ms_default() {
   return {
-    localeError: error22()
+    localeError: error23()
   };
 }
-var error22;
+var error23;
 var init_ms = __esm({
   "node_modules/zod/v4/locales/ms.js"() {
     init_util();
-    error22 = () => {
+    error23 = () => {
       const Sizable = {
         string: { unit: "aksara", verb: "mempunyai" },
         file: { unit: "bait", verb: "mempunyai" },
@@ -48092,14 +48152,14 @@ var init_ms = __esm({
 // node_modules/zod/v4/locales/nl.js
 function nl_default2() {
   return {
-    localeError: error23()
+    localeError: error24()
   };
 }
-var error23;
+var error24;
 var init_nl2 = __esm({
   "node_modules/zod/v4/locales/nl.js"() {
     init_util();
-    error23 = () => {
+    error24 = () => {
       const Sizable = {
         string: { unit: "tekens" },
         file: { unit: "bytes" },
@@ -48216,14 +48276,14 @@ var init_nl2 = __esm({
 // node_modules/zod/v4/locales/no.js
 function no_default() {
   return {
-    localeError: error24()
+    localeError: error25()
   };
 }
-var error24;
+var error25;
 var init_no = __esm({
   "node_modules/zod/v4/locales/no.js"() {
     init_util();
-    error24 = () => {
+    error25 = () => {
       const Sizable = {
         string: { unit: "tegn", verb: "\xE5 ha" },
         file: { unit: "bytes", verb: "\xE5 ha" },
@@ -48339,14 +48399,14 @@ var init_no = __esm({
 // node_modules/zod/v4/locales/ota.js
 function ota_default() {
   return {
-    localeError: error25()
+    localeError: error26()
   };
 }
-var error25;
+var error26;
 var init_ota = __esm({
   "node_modules/zod/v4/locales/ota.js"() {
     init_util();
-    error25 = () => {
+    error26 = () => {
       const Sizable = {
         string: { unit: "harf", verb: "olmal\u0131d\u0131r" },
         file: { unit: "bayt", verb: "olmal\u0131d\u0131r" },
@@ -48463,14 +48523,14 @@ var init_ota = __esm({
 // node_modules/zod/v4/locales/ps.js
 function ps_default() {
   return {
-    localeError: error26()
+    localeError: error27()
   };
 }
-var error26;
+var error27;
 var init_ps = __esm({
   "node_modules/zod/v4/locales/ps.js"() {
     init_util();
-    error26 = () => {
+    error27 = () => {
       const Sizable = {
         string: { unit: "\u062A\u0648\u06A9\u064A", verb: "\u0648\u0644\u0631\u064A" },
         file: { unit: "\u0628\u0627\u06CC\u067C\u0633", verb: "\u0648\u0644\u0631\u064A" },
@@ -48592,14 +48652,14 @@ var init_ps = __esm({
 // node_modules/zod/v4/locales/pl.js
 function pl_default2() {
   return {
-    localeError: error27()
+    localeError: error28()
   };
 }
-var error27;
+var error28;
 var init_pl2 = __esm({
   "node_modules/zod/v4/locales/pl.js"() {
     init_util();
-    error27 = () => {
+    error28 = () => {
       const Sizable = {
         string: { unit: "znak\xF3w", verb: "mie\u0107" },
         file: { unit: "bajt\xF3w", verb: "mie\u0107" },
@@ -48716,14 +48776,14 @@ var init_pl2 = __esm({
 // node_modules/zod/v4/locales/pt.js
 function pt_default() {
   return {
-    localeError: error28()
+    localeError: error29()
   };
 }
-var error28;
+var error29;
 var init_pt = __esm({
   "node_modules/zod/v4/locales/pt.js"() {
     init_util();
-    error28 = () => {
+    error29 = () => {
       const Sizable = {
         string: { unit: "caracteres", verb: "ter" },
         file: { unit: "bytes", verb: "ter" },
@@ -48854,14 +48914,14 @@ function getRussianPlural(count, one, few, many) {
 }
 function ru_default2() {
   return {
-    localeError: error29()
+    localeError: error30()
   };
 }
-var error29;
+var error30;
 var init_ru2 = __esm({
   "node_modules/zod/v4/locales/ru.js"() {
     init_util();
-    error29 = () => {
+    error30 = () => {
       const Sizable = {
         string: {
           unit: {
@@ -49010,14 +49070,14 @@ var init_ru2 = __esm({
 // node_modules/zod/v4/locales/sl.js
 function sl_default() {
   return {
-    localeError: error30()
+    localeError: error31()
   };
 }
-var error30;
+var error31;
 var init_sl = __esm({
   "node_modules/zod/v4/locales/sl.js"() {
     init_util();
-    error30 = () => {
+    error31 = () => {
       const Sizable = {
         string: { unit: "znakov", verb: "imeti" },
         file: { unit: "bajtov", verb: "imeti" },
@@ -49134,14 +49194,14 @@ var init_sl = __esm({
 // node_modules/zod/v4/locales/sv.js
 function sv_default2() {
   return {
-    localeError: error31()
+    localeError: error32()
   };
 }
-var error31;
+var error32;
 var init_sv2 = __esm({
   "node_modules/zod/v4/locales/sv.js"() {
     init_util();
-    error31 = () => {
+    error32 = () => {
       const Sizable = {
         string: { unit: "tecken", verb: "att ha" },
         file: { unit: "bytes", verb: "att ha" },
@@ -49259,14 +49319,14 @@ var init_sv2 = __esm({
 // node_modules/zod/v4/locales/ta.js
 function ta_default() {
   return {
-    localeError: error32()
+    localeError: error33()
   };
 }
-var error32;
+var error33;
 var init_ta = __esm({
   "node_modules/zod/v4/locales/ta.js"() {
     init_util();
-    error32 = () => {
+    error33 = () => {
       const Sizable = {
         string: { unit: "\u0B8E\u0BB4\u0BC1\u0BA4\u0BCD\u0BA4\u0BC1\u0B95\u0BCD\u0B95\u0BB3\u0BCD", verb: "\u0B95\u0BCA\u0BA3\u0BCD\u0B9F\u0BBF\u0BB0\u0BC1\u0B95\u0BCD\u0B95 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD" },
         file: { unit: "\u0BAA\u0BC8\u0B9F\u0BCD\u0B9F\u0BC1\u0B95\u0BB3\u0BCD", verb: "\u0B95\u0BCA\u0BA3\u0BCD\u0B9F\u0BBF\u0BB0\u0BC1\u0B95\u0BCD\u0B95 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD" },
@@ -49383,14 +49443,14 @@ var init_ta = __esm({
 // node_modules/zod/v4/locales/th.js
 function th_default2() {
   return {
-    localeError: error33()
+    localeError: error34()
   };
 }
-var error33;
+var error34;
 var init_th2 = __esm({
   "node_modules/zod/v4/locales/th.js"() {
     init_util();
-    error33 = () => {
+    error34 = () => {
       const Sizable = {
         string: { unit: "\u0E15\u0E31\u0E27\u0E2D\u0E31\u0E01\u0E29\u0E23", verb: "\u0E04\u0E27\u0E23\u0E21\u0E35" },
         file: { unit: "\u0E44\u0E1A\u0E15\u0E4C", verb: "\u0E04\u0E27\u0E23\u0E21\u0E35" },
@@ -49507,10 +49567,10 @@ var init_th2 = __esm({
 // node_modules/zod/v4/locales/tr.js
 function tr_default2() {
   return {
-    localeError: error34()
+    localeError: error35()
   };
 }
-var parsedType3, error34;
+var parsedType3, error35;
 var init_tr2 = __esm({
   "node_modules/zod/v4/locales/tr.js"() {
     init_util();
@@ -49534,7 +49594,7 @@ var init_tr2 = __esm({
       }
       return t;
     };
-    error34 = () => {
+    error35 = () => {
       const Sizable = {
         string: { unit: "karakter", verb: "olmal\u0131" },
         file: { unit: "bayt", verb: "olmal\u0131" },
@@ -49629,14 +49689,14 @@ var init_tr2 = __esm({
 // node_modules/zod/v4/locales/ua.js
 function ua_default() {
   return {
-    localeError: error35()
+    localeError: error36()
   };
 }
-var error35;
+var error36;
 var init_ua = __esm({
   "node_modules/zod/v4/locales/ua.js"() {
     init_util();
-    error35 = () => {
+    error36 = () => {
       const Sizable = {
         string: { unit: "\u0441\u0438\u043C\u0432\u043E\u043B\u0456\u0432", verb: "\u043C\u0430\u0442\u0438\u043C\u0435" },
         file: { unit: "\u0431\u0430\u0439\u0442\u0456\u0432", verb: "\u043C\u0430\u0442\u0438\u043C\u0435" },
@@ -49753,14 +49813,14 @@ var init_ua = __esm({
 // node_modules/zod/v4/locales/ur.js
 function ur_default() {
   return {
-    localeError: error36()
+    localeError: error37()
   };
 }
-var error36;
+var error37;
 var init_ur = __esm({
   "node_modules/zod/v4/locales/ur.js"() {
     init_util();
-    error36 = () => {
+    error37 = () => {
       const Sizable = {
         string: { unit: "\u062D\u0631\u0648\u0641", verb: "\u06C1\u0648\u0646\u0627" },
         file: { unit: "\u0628\u0627\u0626\u0679\u0633", verb: "\u06C1\u0648\u0646\u0627" },
@@ -49877,14 +49937,14 @@ var init_ur = __esm({
 // node_modules/zod/v4/locales/vi.js
 function vi_default() {
   return {
-    localeError: error37()
+    localeError: error38()
   };
 }
-var error37;
+var error38;
 var init_vi = __esm({
   "node_modules/zod/v4/locales/vi.js"() {
     init_util();
-    error37 = () => {
+    error38 = () => {
       const Sizable = {
         string: { unit: "k\xFD t\u1EF1", verb: "c\xF3" },
         file: { unit: "byte", verb: "c\xF3" },
@@ -50000,14 +50060,14 @@ var init_vi = __esm({
 // node_modules/zod/v4/locales/zh-CN.js
 function zh_CN_default2() {
   return {
-    localeError: error38()
+    localeError: error39()
   };
 }
-var error38;
+var error39;
 var init_zh_CN2 = __esm({
   "node_modules/zod/v4/locales/zh-CN.js"() {
     init_util();
-    error38 = () => {
+    error39 = () => {
       const Sizable = {
         string: { unit: "\u5B57\u7B26", verb: "\u5305\u542B" },
         file: { unit: "\u5B57\u8282", verb: "\u5305\u542B" },
@@ -50123,14 +50183,14 @@ var init_zh_CN2 = __esm({
 // node_modules/zod/v4/locales/zh-TW.js
 function zh_TW_default2() {
   return {
-    localeError: error39()
+    localeError: error40()
   };
 }
-var error39;
+var error40;
 var init_zh_TW2 = __esm({
   "node_modules/zod/v4/locales/zh-TW.js"() {
     init_util();
-    error39 = () => {
+    error40 = () => {
       const Sizable = {
         string: { unit: "\u5B57\u5143", verb: "\u64C1\u6709" },
         file: { unit: "\u4F4D\u5143\u7D44", verb: "\u64C1\u6709" },
@@ -53923,8 +53983,8 @@ var init_ZodError = __esm({
           return issue2.message;
         };
         const fieldErrors = { _errors: [] };
-        const processError = (error40) => {
-          for (const issue2 of error40.issues) {
+        const processError = (error41) => {
+          for (const issue2 of error41.issues) {
             if (issue2.code === "invalid_union") {
               issue2.unionErrors.map(processError);
             } else if (issue2.code === "invalid_return_type") {
@@ -53987,8 +54047,8 @@ var init_ZodError = __esm({
       }
     };
     ZodError2.create = (issues) => {
-      const error40 = new ZodError2(issues);
-      return error40;
+      const error41 = new ZodError2(issues);
+      return error41;
     };
   }
 });
@@ -54452,8 +54512,8 @@ var init_types = __esm({
           get error() {
             if (this._error)
               return this._error;
-            const error40 = new ZodError2(ctx.common.issues);
-            this._error = error40;
+            const error41 = new ZodError2(ctx.common.issues);
+            this._error = error41;
             return this._error;
           }
         };
@@ -56950,25 +57010,25 @@ var init_types = __esm({
           });
           return INVALID;
         }
-        function makeArgsIssue(args, error40) {
+        function makeArgsIssue(args, error41) {
           return makeIssue({
             data: args,
             path: ctx.path,
             errorMaps: [ctx.common.contextualErrorMap, ctx.schemaErrorMap, getErrorMap2(), en_default3].filter((x) => !!x),
             issueData: {
               code: ZodIssueCode2.invalid_arguments,
-              argumentsError: error40
+              argumentsError: error41
             }
           });
         }
-        function makeReturnsIssue(returns, error40) {
+        function makeReturnsIssue(returns, error41) {
           return makeIssue({
             data: returns,
             path: ctx.path,
             errorMaps: [ctx.common.contextualErrorMap, ctx.schemaErrorMap, getErrorMap2(), en_default3].filter((x) => !!x),
             issueData: {
               code: ZodIssueCode2.invalid_return_type,
-              returnTypeError: error40
+              returnTypeError: error41
             }
           });
         }
@@ -56977,15 +57037,15 @@ var init_types = __esm({
         if (this._def.returns instanceof ZodPromise2) {
           const me = this;
           return OK(async function(...args) {
-            const error40 = new ZodError2([]);
+            const error41 = new ZodError2([]);
             const parsedArgs = await me._def.args.parseAsync(args, params).catch((e2) => {
-              error40.addIssue(makeArgsIssue(args, e2));
-              throw error40;
+              error41.addIssue(makeArgsIssue(args, e2));
+              throw error41;
             });
             const result = await Reflect.apply(fn, this, parsedArgs);
             const parsedReturns = await me._def.returns._def.type.parseAsync(result, params).catch((e2) => {
-              error40.addIssue(makeReturnsIssue(result, e2));
-              throw error40;
+              error41.addIssue(makeReturnsIssue(result, e2));
+              throw error41;
             });
             return parsedReturns;
           });
@@ -57726,32 +57786,32 @@ function createAbortError() {
 function extractResponseHeaders(response) {
   return Object.fromEntries([...response.headers]);
 }
-function getErrorMessage2(error40) {
-  if (error40 == null) {
+function getErrorMessage2(error41) {
+  if (error41 == null) {
     return "unknown error";
   }
-  if (typeof error40 === "string") {
-    return error40;
+  if (typeof error41 === "string") {
+    return error41;
   }
-  if (error40 instanceof Error) {
-    return error40.message;
+  if (error41 instanceof Error) {
+    return error41.message;
   }
-  return JSON.stringify(error40);
+  return JSON.stringify(error41);
 }
-function isAbortError(error40) {
-  return (error40 instanceof Error || error40 instanceof DOMException) && (error40.name === "AbortError" || error40.name === "ResponseAborted" || // Next.js
-  error40.name === "TimeoutError");
+function isAbortError(error41) {
+  return (error41 instanceof Error || error41 instanceof DOMException) && (error41.name === "AbortError" || error41.name === "ResponseAborted" || // Next.js
+  error41.name === "TimeoutError");
 }
 function handleFetchError({
-  error: error40,
+  error: error41,
   url: url3,
   requestBodyValues
 }) {
-  if (isAbortError(error40)) {
-    return error40;
+  if (isAbortError(error41)) {
+    return error41;
   }
-  if (error40 instanceof TypeError && FETCH_FAILED_ERROR_MESSAGES.includes(error40.message.toLowerCase())) {
-    const cause = error40.cause;
+  if (error41 instanceof TypeError && FETCH_FAILED_ERROR_MESSAGES.includes(error41.message.toLowerCase())) {
+    const cause = error41.cause;
     if (cause != null) {
       return new APICallError({
         message: `Cannot connect to API: ${cause.message}`,
@@ -57763,7 +57823,7 @@ function handleFetchError({
       });
     }
   }
-  return error40;
+  return error41;
 }
 function getRuntimeEnvironmentUserAgent(globalThisAny = globalThis) {
   var _a18, _b8, _c;
@@ -58051,10 +58111,10 @@ async function safeValidateTypes({
       error: TypeValidationError.wrap({ value, cause: result.error }),
       rawValue: value
     };
-  } catch (error40) {
+  } catch (error41) {
     return {
       success: false,
-      error: TypeValidationError.wrap({ value, cause: error40 }),
+      error: TypeValidationError.wrap({ value, cause: error41 }),
       rawValue: value
     };
   }
@@ -58069,11 +58129,11 @@ async function parseJSON({
       return value;
     }
     return validateTypes({ value, schema });
-  } catch (error40) {
-    if (JSONParseError.isInstance(error40) || TypeValidationError.isInstance(error40)) {
-      throw error40;
+  } catch (error41) {
+    if (JSONParseError.isInstance(error41) || TypeValidationError.isInstance(error41)) {
+      throw error41;
     }
-    throw new JSONParseError({ text: text2, cause: error40 });
+    throw new JSONParseError({ text: text2, cause: error41 });
   }
 }
 async function safeParseJSON({
@@ -58086,10 +58146,10 @@ async function safeParseJSON({
       return { success: true, value, rawValue: value };
     }
     return await safeValidateTypes({ value, schema });
-  } catch (error40) {
+  } catch (error41) {
     return {
       success: false,
-      error: JSONParseError.isInstance(error40) ? error40 : new JSONParseError({ text: text2, cause: error40 }),
+      error: JSONParseError.isInstance(error41) ? error41 : new JSONParseError({ text: text2, cause: error41 }),
       rawValue: void 0
     };
   }
@@ -58200,6 +58260,31 @@ async function resolve(value) {
     value = value();
   }
   return Promise.resolve(value);
+}
+function addAdditionalPropertiesToJsonSchema(jsonSchema2) {
+  if (jsonSchema2.type === "object") {
+    jsonSchema2.additionalProperties = false;
+    const properties = jsonSchema2.properties;
+    if (properties != null) {
+      for (const property in properties) {
+        properties[property] = addAdditionalPropertiesToJsonSchema(
+          properties[property]
+        );
+      }
+    }
+  }
+  if (jsonSchema2.type === "array" && jsonSchema2.items != null) {
+    if (Array.isArray(jsonSchema2.items)) {
+      jsonSchema2.items = jsonSchema2.items.map(
+        (item) => addAdditionalPropertiesToJsonSchema(item)
+      );
+    } else {
+      jsonSchema2.items = addAdditionalPropertiesToJsonSchema(
+        jsonSchema2.items
+      );
+    }
+  }
+  return jsonSchema2;
 }
 function parseAnyDef() {
   return {};
@@ -58985,11 +59070,13 @@ function zod4Schema(zodSchema2, options) {
   const useReferences = (_a18 = options == null ? void 0 : options.useReferences) != null ? _a18 : false;
   return jsonSchema(
     // defer json schema creation to avoid unnecessary computation when only validation is needed
-    () => toJSONSchema(zodSchema2, {
-      target: "draft-7",
-      io: "output",
-      reused: useReferences ? "ref" : "inline"
-    }),
+    () => addAdditionalPropertiesToJsonSchema(
+      toJSONSchema(zodSchema2, {
+        target: "draft-7",
+        io: "input",
+        reused: useReferences ? "ref" : "inline"
+      })
+    ),
     {
       validate: async (value) => {
         const result = await safeParseAsync2(zodSchema2, value);
@@ -59128,7 +59215,7 @@ var init_dist9 = __esm({
     };
     generateId = createIdGenerator();
     FETCH_FAILED_ERROR_MESSAGES = ["fetch failed", "failed to fetch"];
-    VERSION3 = true ? "3.0.18" : "0.0.0-test";
+    VERSION3 = true ? "3.0.19" : "0.0.0-test";
     getOriginalFetch = () => globalThis.fetch;
     getFromApi = async ({
       url: url3,
@@ -59157,13 +59244,13 @@ var init_dist9 = __esm({
               url: url3,
               requestBodyValues: {}
             });
-          } catch (error40) {
-            if (isAbortError(error40) || APICallError.isInstance(error40)) {
-              throw error40;
+          } catch (error41) {
+            if (isAbortError(error41) || APICallError.isInstance(error41)) {
+              throw error41;
             }
             throw new APICallError({
               message: "Failed to process error response",
-              cause: error40,
+              cause: error41,
               statusCode: response.status,
               url: url3,
               responseHeaders,
@@ -59178,23 +59265,23 @@ var init_dist9 = __esm({
             url: url3,
             requestBodyValues: {}
           });
-        } catch (error40) {
-          if (error40 instanceof Error) {
-            if (isAbortError(error40) || APICallError.isInstance(error40)) {
-              throw error40;
+        } catch (error41) {
+          if (error41 instanceof Error) {
+            if (isAbortError(error41) || APICallError.isInstance(error41)) {
+              throw error41;
             }
           }
           throw new APICallError({
             message: "Failed to process successful response",
-            cause: error40,
+            cause: error41,
             statusCode: response.status,
             url: url3,
             responseHeaders,
             requestBodyValues: {}
           });
         }
-      } catch (error40) {
-        throw handleFetchError({ error: error40, url: url3, requestBodyValues: {} });
+      } catch (error41) {
+        throw handleFetchError({ error: error41, url: url3, requestBodyValues: {} });
       }
     };
     DEFAULT_SCHEMA_PREFIX = "JSON schema:";
@@ -59276,13 +59363,13 @@ var init_dist9 = __esm({
               url: url3,
               requestBodyValues: body.values
             });
-          } catch (error40) {
-            if (isAbortError(error40) || APICallError.isInstance(error40)) {
-              throw error40;
+          } catch (error41) {
+            if (isAbortError(error41) || APICallError.isInstance(error41)) {
+              throw error41;
             }
             throw new APICallError({
               message: "Failed to process error response",
-              cause: error40,
+              cause: error41,
               statusCode: response.status,
               url: url3,
               responseHeaders,
@@ -59297,23 +59384,23 @@ var init_dist9 = __esm({
             url: url3,
             requestBodyValues: body.values
           });
-        } catch (error40) {
-          if (error40 instanceof Error) {
-            if (isAbortError(error40) || APICallError.isInstance(error40)) {
-              throw error40;
+        } catch (error41) {
+          if (error41 instanceof Error) {
+            if (isAbortError(error41) || APICallError.isInstance(error41)) {
+              throw error41;
             }
           }
           throw new APICallError({
             message: "Failed to process successful response",
-            cause: error40,
+            cause: error41,
             statusCode: response.status,
             url: url3,
             responseHeaders,
             requestBodyValues: body.values
           });
         }
-      } catch (error40) {
-        throw handleFetchError({ error: error40, url: url3, requestBodyValues: body.values });
+      } catch (error41) {
+        throw handleFetchError({ error: error41, url: url3, requestBodyValues: body.values });
       }
     };
     createJsonErrorResponseHandler = ({
@@ -59425,7 +59512,7 @@ var init_dist9 = __esm({
           responseHeaders,
           value: new Uint8Array(buffer)
         };
-      } catch (error40) {
+      } catch (error41) {
         throw new APICallError({
           message: "Failed to read response as array buffer",
           url: url3,
@@ -59433,7 +59520,7 @@ var init_dist9 = __esm({
           statusCode: response.status,
           responseHeaders,
           responseBody: void 0,
-          cause: error40
+          cause: error41
         });
       }
     };
@@ -59893,19 +59980,19 @@ var require_token_io = __commonJS({
       getUserDataDir: () => getUserDataDir
     });
     module2.exports = __toCommonJS2(token_io_exports);
-    var import_path3 = __toESM2(require("path"));
-    var import_fs3 = __toESM2(require("fs"));
-    var import_os2 = __toESM2(require("os"));
+    var import_path4 = __toESM2(require("path"));
+    var import_fs4 = __toESM2(require("fs"));
+    var import_os3 = __toESM2(require("os"));
     var import_token_error = require_token_error();
     function findRootDir() {
       try {
         let dir = process.cwd();
-        while (dir !== import_path3.default.dirname(dir)) {
-          const pkgPath = import_path3.default.join(dir, ".vercel");
-          if (import_fs3.default.existsSync(pkgPath)) {
+        while (dir !== import_path4.default.dirname(dir)) {
+          const pkgPath = import_path4.default.join(dir, ".vercel");
+          if (import_fs4.default.existsSync(pkgPath)) {
             return dir;
           }
-          dir = import_path3.default.dirname(dir);
+          dir = import_path4.default.dirname(dir);
         }
       } catch (e2) {
         throw new import_token_error.VercelOidcTokenError(
@@ -59918,11 +60005,11 @@ var require_token_io = __commonJS({
       if (process.env.XDG_DATA_HOME) {
         return process.env.XDG_DATA_HOME;
       }
-      switch (import_os2.default.platform()) {
+      switch (import_os3.default.platform()) {
         case "darwin":
-          return import_path3.default.join(import_os2.default.homedir(), "Library/Application Support");
+          return import_path4.default.join(import_os3.default.homedir(), "Library/Application Support");
         case "linux":
-          return import_path3.default.join(import_os2.default.homedir(), ".local/share");
+          return import_path4.default.join(import_os3.default.homedir(), ".local/share");
         case "win32":
           if (process.env.LOCALAPPDATA) {
             return process.env.LOCALAPPDATA;
@@ -60194,8 +60281,8 @@ var require_get_vercel_oidc_token = __commonJS({
       let err;
       try {
         token = getVercelOidcTokenSync2();
-      } catch (error40) {
-        err = error40;
+      } catch (error41) {
+        err = error41;
       }
       try {
         const [{ getTokenPayload, isExpired }, { refreshToken }] = await Promise.all([
@@ -60206,12 +60293,12 @@ var require_get_vercel_oidc_token = __commonJS({
           await refreshToken();
           token = getVercelOidcTokenSync2();
         }
-      } catch (error40) {
-        if (err?.message && error40 instanceof Error) {
-          error40.message = `${err.message}
-${error40.message}`;
+      } catch (error41) {
+        if (err?.message && error41 instanceof Error) {
+          error41.message = `${err.message}
+${error41.message}`;
         }
-        throw new import_token_error.VercelOidcTokenError(`Failed to refresh OIDC token`, error40);
+        throw new import_token_error.VercelOidcTokenError(`Failed to refresh OIDC token`, error41);
       }
       return token;
     }
@@ -60314,37 +60401,37 @@ async function createGatewayErrorFromResponse({
       return new GatewayInternalServerError({ message, statusCode, cause });
   }
 }
-function asGatewayError(error40, authMethod) {
+function asGatewayError(error41, authMethod) {
   var _a84;
-  if (GatewayError.isInstance(error40)) {
-    return error40;
+  if (GatewayError.isInstance(error41)) {
+    return error41;
   }
-  if (APICallError.isInstance(error40)) {
+  if (APICallError.isInstance(error41)) {
     return createGatewayErrorFromResponse({
-      response: extractApiCallResponse(error40),
-      statusCode: (_a84 = error40.statusCode) != null ? _a84 : 500,
+      response: extractApiCallResponse(error41),
+      statusCode: (_a84 = error41.statusCode) != null ? _a84 : 500,
       defaultMessage: "Gateway request failed",
-      cause: error40,
+      cause: error41,
       authMethod
     });
   }
   return createGatewayErrorFromResponse({
     response: {},
     statusCode: 500,
-    defaultMessage: error40 instanceof Error ? `Gateway request failed: ${error40.message}` : "Unknown Gateway error",
-    cause: error40,
+    defaultMessage: error41 instanceof Error ? `Gateway request failed: ${error41.message}` : "Unknown Gateway error",
+    cause: error41,
     authMethod
   });
 }
-function extractApiCallResponse(error40) {
-  if (error40.data !== void 0) {
-    return error40.data;
+function extractApiCallResponse(error41) {
+  if (error41.data !== void 0) {
+    return error41.data;
   }
-  if (error40.responseBody != null) {
+  if (error41.responseBody != null) {
     try {
-      return JSON.parse(error40.responseBody);
+      return JSON.parse(error41.responseBody);
     } catch (e2) {
-      return error40.responseBody;
+      return error41.responseBody;
     }
   }
   return {};
@@ -60430,9 +60517,9 @@ function createGatewayProvider(options = {}) {
       }).getAvailableModels().then((metadata) => {
         metadataCache = metadata;
         return metadata;
-      }).catch(async (error40) => {
+      }).catch(async (error41) => {
         throw await asGatewayError(
-          error40,
+          error41,
           await parseAuthMethod(await getHeaders())
         );
       });
@@ -60444,9 +60531,9 @@ function createGatewayProvider(options = {}) {
       baseURL,
       headers: getHeaders,
       fetch: options.fetch
-    }).getCredits().catch(async (error40) => {
+    }).getCredits().catch(async (error41) => {
       throw await asGatewayError(
-        error40,
+        error41,
         await parseAuthMethod(await getHeaders())
       );
     });
@@ -60543,11 +60630,11 @@ var init_dist10 = __esm({
        * @param {unknown} error - The error to check.
        * @returns {boolean} True if the error is a Gateway Error, false otherwise.
        */
-      static isInstance(error40) {
-        return _GatewayError.hasMarker(error40);
+      static isInstance(error41) {
+        return _GatewayError.hasMarker(error41);
       }
-      static hasMarker(error40) {
-        return typeof error40 === "object" && error40 !== null && symbol16 in error40 && error40[symbol16] === true;
+      static hasMarker(error41) {
+        return typeof error41 === "object" && error41 !== null && symbol16 in error41 && error41[symbol16] === true;
       }
     };
     name14 = "GatewayAuthenticationError";
@@ -60564,8 +60651,8 @@ var init_dist10 = __esm({
         this.name = name14;
         this.type = "authentication_error";
       }
-      static isInstance(error40) {
-        return GatewayError.hasMarker(error40) && symbol22 in error40;
+      static isInstance(error41) {
+        return GatewayError.hasMarker(error41) && symbol22 in error41;
       }
       /**
        * Creates a contextual error message when authentication fails
@@ -60621,8 +60708,8 @@ Run 'npx vercel link' to link your project, then 'vc env pull' to fetch the toke
         this.name = name22;
         this.type = "invalid_request_error";
       }
-      static isInstance(error40) {
-        return GatewayError.hasMarker(error40) && symbol32 in error40;
+      static isInstance(error41) {
+        return GatewayError.hasMarker(error41) && symbol32 in error41;
       }
     };
     name32 = "GatewayRateLimitError";
@@ -60639,8 +60726,8 @@ Run 'npx vercel link' to link your project, then 'vc env pull' to fetch the toke
         this.name = name32;
         this.type = "rate_limit_exceeded";
       }
-      static isInstance(error40) {
-        return GatewayError.hasMarker(error40) && symbol42 in error40;
+      static isInstance(error41) {
+        return GatewayError.hasMarker(error41) && symbol42 in error41;
       }
     };
     name42 = "GatewayModelNotFoundError";
@@ -60666,8 +60753,8 @@ Run 'npx vercel link' to link your project, then 'vc env pull' to fetch the toke
         this.type = "model_not_found";
         this.modelId = modelId;
       }
-      static isInstance(error40) {
-        return GatewayError.hasMarker(error40) && symbol52 in error40;
+      static isInstance(error41) {
+        return GatewayError.hasMarker(error41) && symbol52 in error41;
       }
     };
     name52 = "GatewayInternalServerError";
@@ -60684,8 +60771,8 @@ Run 'npx vercel link' to link your project, then 'vc env pull' to fetch the toke
         this.name = name52;
         this.type = "internal_server_error";
       }
-      static isInstance(error40) {
-        return GatewayError.hasMarker(error40) && symbol62 in error40;
+      static isInstance(error41) {
+        return GatewayError.hasMarker(error41) && symbol62 in error41;
       }
     };
     name62 = "GatewayResponseError";
@@ -60706,8 +60793,8 @@ Run 'npx vercel link' to link your project, then 'vc env pull' to fetch the toke
         this.response = response;
         this.validationError = validationError;
       }
-      static isInstance(error40) {
-        return GatewayError.hasMarker(error40) && symbol72 in error40;
+      static isInstance(error41) {
+        return GatewayError.hasMarker(error41) && symbol72 in error41;
       }
     };
     gatewayErrorResponseSchema = lazyValidator(
@@ -60745,8 +60832,8 @@ Run 'npx vercel link' to link your project, then 'vc env pull' to fetch the toke
             fetch: this.config.fetch
           });
           return value;
-        } catch (error40) {
-          throw await asGatewayError(error40);
+        } catch (error41) {
+          throw await asGatewayError(error41);
         }
       }
       async getCredits() {
@@ -60765,8 +60852,8 @@ Run 'npx vercel link' to link your project, then 'vc env pull' to fetch the toke
             fetch: this.config.fetch
           });
           return value;
-        } catch (error40) {
-          throw await asGatewayError(error40);
+        } catch (error41) {
+          throw await asGatewayError(error41);
         }
       }
     };
@@ -60862,8 +60949,8 @@ Run 'npx vercel link' to link your project, then 'vc env pull' to fetch the toke
             response: { headers: responseHeaders, body: rawResponse },
             warnings
           };
-        } catch (error40) {
-          throw await asGatewayError(error40, await parseAuthMethod(resolvedHeaders));
+        } catch (error41) {
+          throw await asGatewayError(error41, await parseAuthMethod(resolvedHeaders));
         }
       }
       async doStream(options) {
@@ -60917,8 +61004,8 @@ Run 'npx vercel link' to link your project, then 'vc env pull' to fetch the toke
             request: { body: args },
             response: { headers: responseHeaders }
           };
-        } catch (error40) {
-          throw await asGatewayError(error40, await parseAuthMethod(resolvedHeaders));
+        } catch (error41) {
+          throw await asGatewayError(error41, await parseAuthMethod(resolvedHeaders));
         }
       }
       isFilePart(part) {
@@ -61010,8 +61097,8 @@ Run 'npx vercel link' to link your project, then 'vc env pull' to fetch the toke
             providerMetadata: responseBody.providerMetadata,
             response: { headers: responseHeaders, body: rawValue }
           };
-        } catch (error40) {
-          throw await asGatewayError(error40, await parseAuthMethod(resolvedHeaders));
+        } catch (error41) {
+          throw await asGatewayError(error41, await parseAuthMethod(resolvedHeaders));
         }
       }
       getUrl() {
@@ -61097,8 +61184,8 @@ Run 'npx vercel link' to link your project, then 'vc env pull' to fetch the toke
               headers: responseHeaders
             }
           };
-        } catch (error40) {
-          throw asGatewayError(error40, await parseAuthMethod(resolvedHeaders));
+        } catch (error41) {
+          throw asGatewayError(error41, await parseAuthMethod(resolvedHeaders));
         }
       }
       getUrl() {
@@ -61125,7 +61212,7 @@ Run 'npx vercel link' to link your project, then 'vc env pull' to fetch the toke
       ).optional(),
       providerMetadata: external_exports.record(external_exports.string(), providerMetadataEntrySchema).optional()
     });
-    VERSION4 = true ? "2.0.18" : "0.0.0-test";
+    VERSION4 = true ? "2.0.22" : "0.0.0-test";
     AI_GATEWAY_PROTOCOL_VERSION = "0.0.1";
     gateway = createGatewayProvider();
   }
@@ -61303,8 +61390,8 @@ var init_ComponentLogger = __esm({
       var i2 = m3.call(o2), r2, ar = [], e2;
       try {
         while ((n === void 0 || n-- > 0) && !(r2 = i2.next()).done) ar.push(r2.value);
-      } catch (error40) {
-        e2 = { error: error40 };
+      } catch (error41) {
+        e2 = { error: error41 };
       } finally {
         try {
           if (r2 && !r2.done && (m3 = i2["return"])) m3.call(i2);
@@ -61428,8 +61515,8 @@ var init_diag = __esm({
       var i2 = m3.call(o2), r2, ar = [], e2;
       try {
         while ((n === void 0 || n-- > 0) && !(r2 = i2.next()).done) ar.push(r2.value);
-      } catch (error40) {
-        e2 = { error: error40 };
+      } catch (error41) {
+        e2 = { error: error41 };
       } finally {
         try {
           if (r2 && !r2.done && (m3 = i2["return"])) m3.call(i2);
@@ -61556,8 +61643,8 @@ var init_NoopContextManager = __esm({
       var i2 = m3.call(o2), r2, ar = [], e2;
       try {
         while ((n === void 0 || n-- > 0) && !(r2 = i2.next()).done) ar.push(r2.value);
-      } catch (error40) {
-        e2 = { error: error40 };
+      } catch (error41) {
+        e2 = { error: error41 };
       } finally {
         try {
           if (r2 && !r2.done && (m3 = i2["return"])) m3.call(i2);
@@ -61617,8 +61704,8 @@ var init_context2 = __esm({
       var i2 = m3.call(o2), r2, ar = [], e2;
       try {
         while ((n === void 0 || n-- > 0) && !(r2 = i2.next()).done) ar.push(r2.value);
-      } catch (error40) {
-        e2 = { error: error40 };
+      } catch (error41) {
+        e2 = { error: error41 };
       } finally {
         try {
           if (r2 && !r2.done && (m3 = i2["return"])) m3.call(i2);
@@ -62102,7 +62189,7 @@ function splitDataUrl(dataUrl) {
       mediaType: header.split(";")[0].split(":")[1],
       base64Content
     };
-  } catch (error40) {
+  } catch (error41) {
     return {
       mediaType: void 0,
       base64Content: void 0
@@ -62119,7 +62206,7 @@ function convertToLanguageModelV2DataContent(content) {
   if (typeof content === "string") {
     try {
       content = new URL(content);
-    } catch (error40) {
+    } catch (error41) {
     }
   }
   if (content instanceof URL && content.protocol === "data:") {
@@ -62561,15 +62648,29 @@ async function standardizePrompt(prompt) {
     system: prompt.system
   };
 }
-function wrapGatewayError(error40) {
-  if (GatewayAuthenticationError.isInstance(error40) || GatewayModelNotFoundError.isInstance(error40)) {
+function wrapGatewayError(error41) {
+  if (!GatewayAuthenticationError.isInstance(error41))
+    return error41;
+  const isProductionEnv = (process == null ? void 0 : process.env.NODE_ENV) === "production";
+  const moreInfoURL = "https://ai-sdk.dev/unauthenticated-ai-gateway";
+  if (isProductionEnv) {
     return new AISDKError({
       name: "GatewayError",
-      message: "Vercel AI Gateway access failed. If you want to use AI SDK providers directly, use the providers, e.g. @ai-sdk/openai, or register a different global default provider.",
-      cause: error40
+      message: `Unauthenticated. Configure AI_GATEWAY_API_KEY or use a provider module. Learn more: ${moreInfoURL}`
     });
   }
-  return error40;
+  return Object.assign(
+    new Error(`\x1B[1m\x1B[31mUnauthenticated request to AI Gateway.\x1B[0m
+
+To authenticate, set the \x1B[33mAI_GATEWAY_API_KEY\x1B[0m environment variable with your API key.
+
+Alternatively, you can use a provider module instead of the AI Gateway.
+
+Learn more: \x1B[34m${moreInfoURL}\x1B[0m
+
+`),
+    { name: "GatewayAuthenticationError" }
+  );
 }
 function assembleOperationName({
   operationId,
@@ -62642,26 +62743,26 @@ function recordSpan({
         span.end();
       }
       return result;
-    } catch (error40) {
+    } catch (error41) {
       try {
-        recordErrorOnSpan(span, error40);
+        recordErrorOnSpan(span, error41);
       } finally {
         span.end();
       }
-      throw error40;
+      throw error41;
     }
   });
 }
-function recordErrorOnSpan(span, error40) {
-  if (error40 instanceof Error) {
+function recordErrorOnSpan(span, error41) {
+  if (error41 instanceof Error) {
     span.recordException({
-      name: error40.name,
-      message: error40.message,
-      stack: error40.stack
+      name: error41.name,
+      message: error41.message,
+      stack: error41.stack
     });
     span.setStatus({
       code: SpanStatusCode.ERROR,
-      message: error40.message
+      message: error41.message
     });
   } else {
     span.setStatus({ code: SpanStatusCode.ERROR });
@@ -62730,10 +62831,10 @@ function asArray(value) {
   return value === void 0 ? [] : Array.isArray(value) ? value : [value];
 }
 function getRetryDelayInMs({
-  error: error40,
+  error: error41,
   exponentialBackoffDelay
 }) {
-  const headers = error40.responseHeaders;
+  const headers = error41.responseHeaders;
   if (!headers)
     return exponentialBackoffDelay;
   let ms;
@@ -62766,15 +62867,15 @@ async function _retryWithExponentialBackoff(f3, {
 }, errors = []) {
   try {
     return await f3();
-  } catch (error40) {
-    if (isAbortError(error40)) {
-      throw error40;
+  } catch (error41) {
+    if (isAbortError(error41)) {
+      throw error41;
     }
     if (maxRetries === 0) {
-      throw error40;
+      throw error41;
     }
-    const errorMessage = getErrorMessage2(error40);
-    const newErrors = [...errors, error40];
+    const errorMessage = getErrorMessage2(error41);
+    const newErrors = [...errors, error41];
     const tryNumber = newErrors.length;
     if (tryNumber > maxRetries) {
       throw new RetryError({
@@ -62783,10 +62884,10 @@ async function _retryWithExponentialBackoff(f3, {
         errors: newErrors
       });
     }
-    if (error40 instanceof Error && APICallError.isInstance(error40) && error40.isRetryable === true && tryNumber <= maxRetries) {
+    if (error41 instanceof Error && APICallError.isInstance(error41) && error41.isRetryable === true && tryNumber <= maxRetries) {
       await delay(
         getRetryDelayInMs({
-          error: error40,
+          error: error41,
           exponentialBackoffDelay: delayInMs
         }),
         { abortSignal }
@@ -62803,7 +62904,7 @@ async function _retryWithExponentialBackoff(f3, {
       );
     }
     if (tryNumber === 1) {
-      throw error40;
+      throw error41;
     }
     throw new RetryError({
       message: `Failed after ${tryNumber} attempts with non-retryable error: '${errorMessage}'`,
@@ -62863,9 +62964,9 @@ async function parseToolCall({
     }
     try {
       return await doParseToolCall({ toolCall, tools });
-    } catch (error40) {
-      if (repairToolCall == null || !(NoSuchToolError.isInstance(error40) || InvalidToolInputError.isInstance(error40))) {
-        throw error40;
+    } catch (error41) {
+      if (repairToolCall == null || !(NoSuchToolError.isInstance(error41) || InvalidToolInputError.isInstance(error41))) {
+        throw error41;
       }
       let repairedToolCall = null;
       try {
@@ -62878,20 +62979,20 @@ async function parseToolCall({
           },
           system,
           messages,
-          error: error40
+          error: error41
         });
       } catch (repairError) {
         throw new ToolCallRepairError({
           cause: repairError,
-          originalError: error40
+          originalError: error41
         });
       }
       if (repairedToolCall == null) {
-        throw error40;
+        throw error41;
       }
       return await doParseToolCall({ toolCall: repairedToolCall, tools });
     }
-  } catch (error40) {
+  } catch (error41) {
     const parsedInput = await safeParseJSON({ text: toolCall.input });
     const input = parsedInput.success ? parsedInput.value : toolCall.input;
     return {
@@ -62901,7 +63002,7 @@ async function parseToolCall({
       input,
       dynamic: true,
       invalid: true,
-      error: error40,
+      error: error41,
       providerMetadata: toolCall.providerMetadata
     };
   }
@@ -63397,8 +63498,8 @@ async function generateText({
         });
       }
     });
-  } catch (error40) {
-    throw wrapGatewayError(error40);
+  } catch (error41) {
+    throw wrapGatewayError(error41);
   }
 }
 async function executeTools({
@@ -63472,14 +63573,14 @@ async function executeTools({
               output,
               dynamic: tool2.type === "dynamic"
             };
-          } catch (error40) {
-            recordErrorOnSpan(span, error40);
+          } catch (error41) {
+            recordErrorOnSpan(span, error41);
             return {
               type: "tool-error",
               toolCallId,
               toolName,
               input,
-              error: error40,
+              error: error41,
               dynamic: tool2.type === "dynamic"
             };
           }
@@ -63951,8 +64052,8 @@ var init_dist11 = __esm({
         super({ name: name15, message });
         this[_a16] = true;
       }
-      static isInstance(error40) {
-        return AISDKError.hasMarker(error40, marker16);
+      static isInstance(error41) {
+        return AISDKError.hasMarker(error41, marker16);
       }
     };
     _a16 = symbol17;
@@ -63995,8 +64096,8 @@ var init_dist11 = __esm({
         this.parameter = parameter;
         this.value = value;
       }
-      static isInstance(error40) {
-        return AISDKError.hasMarker(error40, marker23);
+      static isInstance(error41) {
+        return AISDKError.hasMarker(error41, marker23);
       }
     };
     _a23 = symbol23;
@@ -64019,8 +64120,8 @@ var init_dist11 = __esm({
         this.toolInput = toolInput;
         this.toolName = toolName;
       }
-      static isInstance(error40) {
-        return AISDKError.hasMarker(error40, marker43);
+      static isInstance(error41) {
+        return AISDKError.hasMarker(error41, marker43);
       }
     };
     _a43 = symbol43;
@@ -64047,8 +64148,8 @@ var init_dist11 = __esm({
         this.usage = usage;
         this.finishReason = finishReason;
       }
-      static isInstance(error40) {
-        return AISDKError.hasMarker(error40, marker63);
+      static isInstance(error41) {
+        return AISDKError.hasMarker(error41, marker63);
       }
     };
     _a63 = symbol63;
@@ -64070,8 +64171,8 @@ var init_dist11 = __esm({
         this.toolName = toolName;
         this.availableTools = availableTools;
       }
-      static isInstance(error40) {
-        return AISDKError.hasMarker(error40, marker82);
+      static isInstance(error41) {
+        return AISDKError.hasMarker(error41, marker82);
       }
     };
     _a82 = symbol82;
@@ -64088,8 +64189,8 @@ var init_dist11 = __esm({
         this[_a92] = true;
         this.originalError = originalError;
       }
-      static isInstance(error40) {
-        return AISDKError.hasMarker(error40, marker92);
+      static isInstance(error41) {
+        return AISDKError.hasMarker(error41, marker92);
       }
     };
     _a92 = symbol92;
@@ -64120,8 +64221,8 @@ var init_dist11 = __esm({
         this[_a112] = true;
         this.role = role;
       }
-      static isInstance(error40) {
-        return AISDKError.hasMarker(error40, marker112);
+      static isInstance(error41) {
+        return AISDKError.hasMarker(error41, marker112);
       }
     };
     _a112 = symbol112;
@@ -64146,8 +64247,8 @@ var init_dist11 = __esm({
         this.statusCode = statusCode;
         this.statusText = statusText;
       }
-      static isInstance(error40) {
-        return AISDKError.hasMarker(error40, marker132);
+      static isInstance(error41) {
+        return AISDKError.hasMarker(error41, marker132);
       }
     };
     _a132 = symbol132;
@@ -64166,8 +64267,8 @@ var init_dist11 = __esm({
         this.errors = errors;
         this.lastError = errors[errors.length - 1];
       }
-      static isInstance(error40) {
-        return AISDKError.hasMarker(error40, marker142);
+      static isInstance(error41) {
+        return AISDKError.hasMarker(error41, marker142);
       }
     };
     _a142 = symbol142;
@@ -64259,7 +64360,7 @@ var init_dist11 = __esm({
       const id3Size = (bytes[6] & 127) << 21 | (bytes[7] & 127) << 14 | (bytes[8] & 127) << 7 | bytes[9] & 127;
       return bytes.slice(id3Size + 10);
     };
-    VERSION6 = true ? "5.0.108" : "0.0.0-test";
+    VERSION6 = true ? "5.0.115" : "0.0.0-test";
     download = async ({ url: url3 }) => {
       var _a162;
       const urlText = url3.toString();
@@ -64282,11 +64383,11 @@ var init_dist11 = __esm({
           data: new Uint8Array(await response.arrayBuffer()),
           mediaType: (_a162 = response.headers.get("content-type")) != null ? _a162 : void 0
         };
-      } catch (error40) {
-        if (DownloadError.isInstance(error40)) {
-          throw error40;
+      } catch (error41) {
+        if (DownloadError.isInstance(error41)) {
+          throw error41;
         }
-        throw new DownloadError({ url: urlText, cause: error40 });
+        throw new DownloadError({ url: urlText, cause: error41 });
       }
     };
     createDefaultDownloadFunction = (download2 = download) => (requestedDownloads) => Promise.all(
@@ -65122,6 +65223,20 @@ var init_dist11 = __esm({
 });
 
 // node_modules/@ai-sdk/openai/dist/index.mjs
+function getOpenAILanguageModelCapabilities(modelId) {
+  const supportsFlexProcessing = modelId.startsWith("o3") || modelId.startsWith("o4-mini") || modelId.startsWith("gpt-5") && !modelId.startsWith("gpt-5-chat");
+  const supportsPriorityProcessing = modelId.startsWith("gpt-4") || modelId.startsWith("gpt-5-mini") || modelId.startsWith("gpt-5") && !modelId.startsWith("gpt-5-nano") && !modelId.startsWith("gpt-5-chat") || modelId.startsWith("o3") || modelId.startsWith("o4-mini");
+  const isReasoningModel = !(modelId.startsWith("gpt-3") || modelId.startsWith("gpt-4") || modelId.startsWith("chatgpt-4o") || modelId.startsWith("gpt-5-chat"));
+  const supportsNonReasoningParameters = modelId.startsWith("gpt-5.1") || modelId.startsWith("gpt-5.2");
+  const systemMessageMode = isReasoningModel ? "developer" : "system";
+  return {
+    supportsFlexProcessing,
+    supportsPriorityProcessing,
+    isReasoningModel,
+    systemMessageMode,
+    supportsNonReasoningParameters
+  };
+}
 function convertToOpenAIChatMessages({
   prompt,
   systemMessageMode = "system"
@@ -65379,22 +65494,6 @@ function prepareChatTools({
       });
     }
   }
-}
-function isReasoningModel(modelId) {
-  return (modelId.startsWith("o") || modelId.startsWith("gpt-5")) && !modelId.startsWith("gpt-5-chat");
-}
-function supportsFlexProcessing(modelId) {
-  return modelId.startsWith("o3") || modelId.startsWith("o4-mini") || modelId.startsWith("gpt-5") && !modelId.startsWith("gpt-5-chat");
-}
-function supportsPriorityProcessing(modelId) {
-  return modelId.startsWith("gpt-4") || modelId.startsWith("gpt-5-mini") || modelId.startsWith("gpt-5") && !modelId.startsWith("gpt-5-nano") && !modelId.startsWith("gpt-5-chat") || modelId.startsWith("o3") || modelId.startsWith("o4-mini");
-}
-function getSystemMessageMode(modelId) {
-  var _a18, _b8;
-  if (!isReasoningModel(modelId)) {
-    return "system";
-  }
-  return (_b8 = (_a18 = reasoningModels[modelId]) == null ? void 0 : _a18.systemMessageMode) != null ? _b8 : "developer";
 }
 function convertToOpenAICompletionPrompt({
   prompt,
@@ -65951,32 +66050,6 @@ function isResponseAnnotationAddedChunk(chunk) {
 function isErrorChunk(chunk) {
   return chunk.type === "error";
 }
-function getResponsesModelConfig(modelId) {
-  const supportsFlexProcessing22 = modelId.startsWith("o3") || modelId.startsWith("o4-mini") || modelId.startsWith("gpt-5") && !modelId.startsWith("gpt-5-chat");
-  const supportsPriorityProcessing22 = modelId.startsWith("gpt-4") || modelId.startsWith("gpt-5-mini") || modelId.startsWith("gpt-5") && !modelId.startsWith("gpt-5-nano") && !modelId.startsWith("gpt-5-chat") || modelId.startsWith("o3") || modelId.startsWith("o4-mini");
-  const defaults2 = {
-    systemMessageMode: "system",
-    supportsFlexProcessing: supportsFlexProcessing22,
-    supportsPriorityProcessing: supportsPriorityProcessing22
-  };
-  if (modelId.startsWith("gpt-5-chat")) {
-    return {
-      ...defaults2,
-      isReasoningModel: false
-    };
-  }
-  if (modelId.startsWith("o") || modelId.startsWith("gpt-5") || modelId.startsWith("codex-") || modelId.startsWith("computer-use")) {
-    return {
-      ...defaults2,
-      isReasoningModel: true,
-      systemMessageMode: "developer"
-    };
-  }
-  return {
-    ...defaults2,
-    isReasoningModel: false
-  };
-}
 function mapWebSearchOutput(action) {
   var _a18;
   switch (action.type) {
@@ -65988,9 +66061,13 @@ function mapWebSearchOutput(action) {
       };
     case "open_page":
       return { action: { type: "openPage", url: action.url } };
-    case "find":
+    case "find_in_page":
       return {
-        action: { type: "find", url: action.url, pattern: action.pattern }
+        action: {
+          type: "findInPage",
+          url: action.url,
+          pattern: action.pattern
+        }
       };
   }
 }
@@ -66088,7 +66165,7 @@ function createOpenAI(options = {}) {
   provider.tools = openaiTools;
   return provider;
 }
-var openaiErrorDataSchema, openaiFailedResponseHandler, openaiChatResponseSchema, openaiChatChunkSchema, openaiChatLanguageModelOptions, OpenAIChatLanguageModel, reasoningModels, openaiCompletionResponseSchema, openaiCompletionChunkSchema, openaiCompletionProviderOptions, OpenAICompletionLanguageModel, openaiEmbeddingProviderOptions, openaiTextEmbeddingResponseSchema, OpenAIEmbeddingModel, openaiImageResponseSchema, modelMaxImagesPerCall, hasDefaultResponseFormat, OpenAIImageModel, codeInterpreterInputSchema, codeInterpreterOutputSchema, codeInterpreterArgsSchema, codeInterpreterToolFactory, codeInterpreter, comparisonFilterSchema, compoundFilterSchema, fileSearchArgsSchema, fileSearchOutputSchema, fileSearch, imageGenerationArgsSchema, imageGenerationInputSchema, imageGenerationOutputSchema, imageGenerationToolFactory, imageGeneration, localShellInputSchema, localShellOutputSchema, localShell, webSearchArgsSchema, webSearchInputSchema, webSearchOutputSchema, webSearchToolFactory, webSearch, webSearchPreviewArgsSchema, webSearchPreviewInputSchema, webSearchPreviewOutputSchema, webSearchPreview, openaiTools, openaiResponsesReasoningProviderOptionsSchema, openaiResponsesChunkSchema, openaiResponsesResponseSchema, TOP_LOGPROBS_MAX, openaiResponsesReasoningModelIds, openaiResponsesModelIds, openaiResponsesProviderOptionsSchema, OpenAIResponsesLanguageModel, openaiSpeechProviderOptionsSchema, OpenAISpeechModel, openaiTranscriptionResponseSchema, openAITranscriptionProviderOptions, languageMap, OpenAITranscriptionModel, VERSION7, openai;
+var openaiErrorDataSchema, openaiFailedResponseHandler, openaiChatResponseSchema, openaiChatChunkSchema, openaiChatLanguageModelOptions, OpenAIChatLanguageModel, openaiCompletionResponseSchema, openaiCompletionChunkSchema, openaiCompletionProviderOptions, OpenAICompletionLanguageModel, openaiEmbeddingProviderOptions, openaiTextEmbeddingResponseSchema, OpenAIEmbeddingModel, openaiImageResponseSchema, modelMaxImagesPerCall, hasDefaultResponseFormat, OpenAIImageModel, codeInterpreterInputSchema, codeInterpreterOutputSchema, codeInterpreterArgsSchema, codeInterpreterToolFactory, codeInterpreter, comparisonFilterSchema, compoundFilterSchema, fileSearchArgsSchema, fileSearchOutputSchema, fileSearch, imageGenerationArgsSchema, imageGenerationInputSchema, imageGenerationOutputSchema, imageGenerationToolFactory, imageGeneration, localShellInputSchema, localShellOutputSchema, localShell, webSearchArgsSchema, webSearchInputSchema, webSearchOutputSchema, webSearchToolFactory, webSearch, webSearchPreviewArgsSchema, webSearchPreviewInputSchema, webSearchPreviewOutputSchema, webSearchPreview, openaiTools, openaiResponsesReasoningProviderOptionsSchema, openaiResponsesChunkSchema, openaiResponsesResponseSchema, TOP_LOGPROBS_MAX, openaiResponsesReasoningModelIds, openaiResponsesModelIds, openaiResponsesProviderOptionsSchema, OpenAIResponsesLanguageModel, openaiSpeechProviderOptionsSchema, OpenAISpeechModel, openaiTranscriptionResponseSchema, openAITranscriptionProviderOptions, languageMap, OpenAITranscriptionModel, VERSION7, openai;
 var init_dist12 = __esm({
   "node_modules/@ai-sdk/openai/dist/index.mjs"() {
     init_dist9();
@@ -66188,10 +66265,12 @@ var init_dist12 = __esm({
                 annotations: external_exports.array(
                   external_exports.object({
                     type: external_exports.literal("url_citation"),
-                    start_index: external_exports.number(),
-                    end_index: external_exports.number(),
-                    url: external_exports.string(),
-                    title: external_exports.string()
+                    url_citation: external_exports.object({
+                      start_index: external_exports.number(),
+                      end_index: external_exports.number(),
+                      url: external_exports.string(),
+                      title: external_exports.string()
+                    })
                   })
                 ).nullish()
               }),
@@ -66255,10 +66334,12 @@ var init_dist12 = __esm({
                   annotations: external_exports.array(
                     external_exports.object({
                       type: external_exports.literal("url_citation"),
-                      start_index: external_exports.number(),
-                      end_index: external_exports.number(),
-                      url: external_exports.string(),
-                      title: external_exports.string()
+                      url_citation: external_exports.object({
+                        start_index: external_exports.number(),
+                        end_index: external_exports.number(),
+                        url: external_exports.string(),
+                        title: external_exports.string()
+                      })
                     })
                   ).nullish()
                 }).nullish(),
@@ -66330,7 +66411,7 @@ var init_dist12 = __esm({
           /**
            * Reasoning effort for reasoning models. Defaults to `medium`.
            */
-          reasoningEffort: external_exports.enum(["none", "minimal", "low", "medium", "high"]).optional(),
+          reasoningEffort: external_exports.enum(["none", "minimal", "low", "medium", "high", "xhigh"]).optional(),
           /**
            * Maximum number of completion tokens to generate. Useful for reasoning models.
            */
@@ -66435,6 +66516,7 @@ var init_dist12 = __esm({
           schema: openaiChatLanguageModelOptions
         })) != null ? _a18 : {};
         const structuredOutputs = (_b8 = openaiOptions.structuredOutputs) != null ? _b8 : true;
+        const modelCapabilities = getOpenAILanguageModelCapabilities(this.modelId);
         if (topK != null) {
           warnings.push({
             type: "unsupported-setting",
@@ -66451,7 +66533,7 @@ var init_dist12 = __esm({
         const { messages, warnings: messageWarnings } = convertToOpenAIChatMessages(
           {
             prompt,
-            systemMessageMode: getSystemMessageMode(this.modelId)
+            systemMessageMode: modelCapabilities.systemMessageMode
           }
         );
         warnings.push(...messageWarnings);
@@ -66497,22 +66579,31 @@ var init_dist12 = __esm({
           // messages:
           messages
         };
-        if (isReasoningModel(this.modelId)) {
-          if (baseArgs.temperature != null) {
-            baseArgs.temperature = void 0;
-            warnings.push({
-              type: "unsupported-setting",
-              setting: "temperature",
-              details: "temperature is not supported for reasoning models"
-            });
-          }
-          if (baseArgs.top_p != null) {
-            baseArgs.top_p = void 0;
-            warnings.push({
-              type: "unsupported-setting",
-              setting: "topP",
-              details: "topP is not supported for reasoning models"
-            });
+        if (modelCapabilities.isReasoningModel) {
+          if (openaiOptions.reasoningEffort !== "none" || !modelCapabilities.supportsNonReasoningParameters) {
+            if (baseArgs.temperature != null) {
+              baseArgs.temperature = void 0;
+              warnings.push({
+                type: "unsupported-setting",
+                setting: "temperature",
+                details: "temperature is not supported for reasoning models"
+              });
+            }
+            if (baseArgs.top_p != null) {
+              baseArgs.top_p = void 0;
+              warnings.push({
+                type: "unsupported-setting",
+                setting: "topP",
+                details: "topP is not supported for reasoning models"
+              });
+            }
+            if (baseArgs.logprobs != null) {
+              baseArgs.logprobs = void 0;
+              warnings.push({
+                type: "other",
+                message: "logprobs is not supported for reasoning models"
+              });
+            }
           }
           if (baseArgs.frequency_penalty != null) {
             baseArgs.frequency_penalty = void 0;
@@ -66535,13 +66626,6 @@ var init_dist12 = __esm({
             warnings.push({
               type: "other",
               message: "logitBias is not supported for reasoning models"
-            });
-          }
-          if (baseArgs.logprobs != null) {
-            baseArgs.logprobs = void 0;
-            warnings.push({
-              type: "other",
-              message: "logprobs is not supported for reasoning models"
             });
           }
           if (baseArgs.top_logprobs != null) {
@@ -66567,7 +66651,7 @@ var init_dist12 = __esm({
             });
           }
         }
-        if (openaiOptions.serviceTier === "flex" && !supportsFlexProcessing(this.modelId)) {
+        if (openaiOptions.serviceTier === "flex" && !modelCapabilities.supportsFlexProcessing) {
           warnings.push({
             type: "unsupported-setting",
             setting: "serviceTier",
@@ -66575,7 +66659,7 @@ var init_dist12 = __esm({
           });
           baseArgs.service_tier = void 0;
         }
-        if (openaiOptions.serviceTier === "priority" && !supportsPriorityProcessing(this.modelId)) {
+        if (openaiOptions.serviceTier === "priority" && !modelCapabilities.supportsPriorityProcessing) {
           warnings.push({
             type: "unsupported-setting",
             setting: "serviceTier",
@@ -66642,8 +66726,8 @@ var init_dist12 = __esm({
             type: "source",
             sourceType: "url",
             id: generateId(),
-            url: annotation.url,
-            title: annotation.title
+            url: annotation.url_citation.url,
+            title: annotation.url_citation.title
           });
         }
         const completionTokenDetails = (_d = response.usage) == null ? void 0 : _d.completion_tokens_details;
@@ -66872,8 +66956,8 @@ var init_dist12 = __esm({
                       type: "source",
                       sourceType: "url",
                       id: generateId(),
-                      url: annotation.url,
-                      title: annotation.title
+                      url: annotation.url_citation.url,
+                      title: annotation.url_citation.title
                     });
                   }
                 }
@@ -66894,26 +66978,6 @@ var init_dist12 = __esm({
           request: { body },
           response: { headers: responseHeaders }
         };
-      }
-    };
-    reasoningModels = {
-      o3: {
-        systemMessageMode: "developer"
-      },
-      "o3-2025-04-16": {
-        systemMessageMode: "developer"
-      },
-      "o3-mini": {
-        systemMessageMode: "developer"
-      },
-      "o3-mini-2025-01-31": {
-        systemMessageMode: "developer"
-      },
-      "o4-mini": {
-        systemMessageMode: "developer"
-      },
-      "o4-mini-2025-04-16": {
-        systemMessageMode: "developer"
       }
     };
     openaiCompletionResponseSchema = lazyValidator(
@@ -67358,11 +67422,13 @@ var init_dist12 = __esm({
       "dall-e-3": 1,
       "dall-e-2": 10,
       "gpt-image-1": 10,
-      "gpt-image-1-mini": 10
+      "gpt-image-1-mini": 10,
+      "gpt-image-1.5": 10
     };
     hasDefaultResponseFormat = /* @__PURE__ */ new Set([
       "gpt-image-1",
-      "gpt-image-1-mini"
+      "gpt-image-1-mini",
+      "gpt-image-1.5"
     ]);
     OpenAIImageModel = class {
       constructor(modelId, config7) {
@@ -67487,8 +67553,8 @@ var init_dist12 = __esm({
     };
     comparisonFilterSchema = external_exports.object({
       key: external_exports.string(),
-      type: external_exports.enum(["eq", "ne", "gt", "gte", "lt", "lte"]),
-      value: external_exports.union([external_exports.string(), external_exports.number(), external_exports.boolean()])
+      type: external_exports.enum(["eq", "ne", "gt", "gte", "lt", "lte", "in", "nin"]),
+      value: external_exports.union([external_exports.string(), external_exports.number(), external_exports.boolean(), external_exports.array(external_exports.string())])
     });
     compoundFilterSchema = external_exports.object({
       type: external_exports.enum(["and", "or"]),
@@ -67616,7 +67682,7 @@ var init_dist12 = __esm({
               url: external_exports.string().nullish()
             }),
             external_exports.object({
-              type: external_exports.literal("find"),
+              type: external_exports.literal("findInPage"),
               url: external_exports.string().nullish(),
               pattern: external_exports.string().nullish()
             })
@@ -67667,7 +67733,7 @@ var init_dist12 = __esm({
               url: external_exports.string().nullish()
             }),
             external_exports.object({
-              type: external_exports.literal("find"),
+              type: external_exports.literal("findInPage"),
               url: external_exports.string().nullish(),
               pattern: external_exports.string().nullish()
             })
@@ -67909,7 +67975,7 @@ var init_dist12 = __esm({
                     url: external_exports.string().nullish()
                   }),
                   external_exports.object({
-                    type: external_exports.literal("find"),
+                    type: external_exports.literal("find_in_page"),
                     url: external_exports.string().nullish(),
                     pattern: external_exports.string().nullish()
                   })
@@ -68119,7 +68185,7 @@ var init_dist12 = __esm({
                     url: external_exports.string().nullish()
                   }),
                   external_exports.object({
-                    type: external_exports.literal("find"),
+                    type: external_exports.literal("find_in_page"),
                     url: external_exports.string().nullish(),
                     pattern: external_exports.string().nullish()
                   })
@@ -68236,7 +68302,11 @@ var init_dist12 = __esm({
       "gpt-5.1",
       "gpt-5.1-chat-latest",
       "gpt-5.1-codex-mini",
-      "gpt-5.1-codex"
+      "gpt-5.1-codex",
+      "gpt-5.1-codex-max",
+      "gpt-5.2",
+      "gpt-5.2-chat-latest",
+      "gpt-5.2-pro"
     ];
     openaiResponsesModelIds = [
       "gpt-4.1",
@@ -68319,6 +68389,16 @@ var init_dist12 = __esm({
            * @default 'in_memory'
            */
           promptCacheRetention: external_exports.enum(["in_memory", "24h"]).nullish(),
+          /**
+           * Reasoning effort for reasoning models. Defaults to `medium`. If you use
+           * `providerOptions` to set the `reasoningEffort` option, this model setting will be ignored.
+           * Valid values: 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh'
+           *
+           * The 'none' type for `reasoningEffort` is only available for OpenAI's GPT-5.1
+           * models. Also, the 'xhigh' type for `reasoningEffort` is only available for
+           * OpenAI's GPT-5.1-Codex-Max model. Setting `reasoningEffort` to 'none' or 'xhigh' with unsupported models will result in
+           * an error.
+           */
           reasoningEffort: external_exports.string().nullish(),
           reasoningSummary: external_exports.string().nullish(),
           safetyIdentifier: external_exports.string().nullish(),
@@ -68361,7 +68441,7 @@ var init_dist12 = __esm({
       }) {
         var _a18, _b8, _c, _d;
         const warnings = [];
-        const modelConfig = getResponsesModelConfig(this.modelId);
+        const modelCapabilities = getOpenAILanguageModelCapabilities(this.modelId);
         if (topK != null) {
           warnings.push({ type: "unsupported-setting", setting: "topK" });
         }
@@ -68397,7 +68477,7 @@ var init_dist12 = __esm({
         }
         const { input, warnings: inputWarnings } = await convertToOpenAIResponsesInput({
           prompt,
-          systemMessageMode: modelConfig.systemMessageMode,
+          systemMessageMode: modelCapabilities.systemMessageMode,
           fileIdPrefixes: this.config.fileIdPrefixes,
           store: (_a18 = openaiOptions == null ? void 0 : openaiOptions.store) != null ? _a18 : true,
           hasLocalShellTool: hasOpenAITool("openai.local_shell")
@@ -68431,7 +68511,7 @@ var init_dist12 = __esm({
           addInclude("code_interpreter_call.outputs");
         }
         const store = openaiOptions == null ? void 0 : openaiOptions.store;
-        if (store === false && modelConfig.isReasoningModel) {
+        if (store === false && modelCapabilities.isReasoningModel) {
           addInclude("reasoning.encrypted_content");
         }
         const baseArgs = {
@@ -68473,7 +68553,7 @@ var init_dist12 = __esm({
           top_logprobs: topLogprobs,
           truncation: openaiOptions == null ? void 0 : openaiOptions.truncation,
           // model-specific settings:
-          ...modelConfig.isReasoningModel && ((openaiOptions == null ? void 0 : openaiOptions.reasoningEffort) != null || (openaiOptions == null ? void 0 : openaiOptions.reasoningSummary) != null) && {
+          ...modelCapabilities.isReasoningModel && ((openaiOptions == null ? void 0 : openaiOptions.reasoningEffort) != null || (openaiOptions == null ? void 0 : openaiOptions.reasoningSummary) != null) && {
             reasoning: {
               ...(openaiOptions == null ? void 0 : openaiOptions.reasoningEffort) != null && {
                 effort: openaiOptions.reasoningEffort
@@ -68484,22 +68564,24 @@ var init_dist12 = __esm({
             }
           }
         };
-        if (modelConfig.isReasoningModel) {
-          if (baseArgs.temperature != null) {
-            baseArgs.temperature = void 0;
-            warnings.push({
-              type: "unsupported-setting",
-              setting: "temperature",
-              details: "temperature is not supported for reasoning models"
-            });
-          }
-          if (baseArgs.top_p != null) {
-            baseArgs.top_p = void 0;
-            warnings.push({
-              type: "unsupported-setting",
-              setting: "topP",
-              details: "topP is not supported for reasoning models"
-            });
+        if (modelCapabilities.isReasoningModel) {
+          if (!((openaiOptions == null ? void 0 : openaiOptions.reasoningEffort) === "none" && modelCapabilities.supportsNonReasoningParameters)) {
+            if (baseArgs.temperature != null) {
+              baseArgs.temperature = void 0;
+              warnings.push({
+                type: "unsupported-setting",
+                setting: "temperature",
+                details: "temperature is not supported for reasoning models"
+              });
+            }
+            if (baseArgs.top_p != null) {
+              baseArgs.top_p = void 0;
+              warnings.push({
+                type: "unsupported-setting",
+                setting: "topP",
+                details: "topP is not supported for reasoning models"
+              });
+            }
           }
         } else {
           if ((openaiOptions == null ? void 0 : openaiOptions.reasoningEffort) != null) {
@@ -68517,7 +68599,7 @@ var init_dist12 = __esm({
             });
           }
         }
-        if ((openaiOptions == null ? void 0 : openaiOptions.serviceTier) === "flex" && !modelConfig.supportsFlexProcessing) {
+        if ((openaiOptions == null ? void 0 : openaiOptions.serviceTier) === "flex" && !modelCapabilities.supportsFlexProcessing) {
           warnings.push({
             type: "unsupported-setting",
             setting: "serviceTier",
@@ -68525,7 +68607,7 @@ var init_dist12 = __esm({
           });
           delete baseArgs.service_tier;
         }
-        if ((openaiOptions == null ? void 0 : openaiOptions.serviceTier) === "priority" && !modelConfig.supportsPriorityProcessing) {
+        if ((openaiOptions == null ? void 0 : openaiOptions.serviceTier) === "priority" && !modelCapabilities.supportsPriorityProcessing) {
           warnings.push({
             type: "unsupported-setting",
             setting: "serviceTier",
@@ -69682,7 +69764,7 @@ var init_dist12 = __esm({
         };
       }
     };
-    VERSION7 = true ? "2.0.77" : "0.0.0-test";
+    VERSION7 = true ? "2.0.88" : "0.0.0-test";
     openai = createOpenAI();
   }
 });
@@ -70667,7 +70749,7 @@ var init_dist13 = __esm({
     init_v42();
     init_dist9();
     init_v42();
-    VERSION8 = true ? "2.0.53" : "0.0.0-test";
+    VERSION8 = true ? "2.0.56" : "0.0.0-test";
     anthropicErrorDataSchema = lazySchema(
       () => zodSchema(
         external_exports.object({
@@ -70755,11 +70837,18 @@ var init_dist13 = __esm({
                       type: external_exports.literal("document"),
                       title: external_exports.string().nullable(),
                       citations: external_exports.object({ enabled: external_exports.boolean() }).optional(),
-                      source: external_exports.object({
-                        type: external_exports.literal("text"),
-                        media_type: external_exports.string(),
-                        data: external_exports.string()
-                      })
+                      source: external_exports.union([
+                        external_exports.object({
+                          type: external_exports.literal("base64"),
+                          media_type: external_exports.literal("application/pdf"),
+                          data: external_exports.string()
+                        }),
+                        external_exports.object({
+                          type: external_exports.literal("text"),
+                          media_type: external_exports.literal("text/plain"),
+                          data: external_exports.string()
+                        })
+                      ])
                     })
                   }),
                   external_exports.object({
@@ -70938,11 +71027,18 @@ var init_dist13 = __esm({
                       type: external_exports.literal("document"),
                       title: external_exports.string().nullable(),
                       citations: external_exports.object({ enabled: external_exports.boolean() }).optional(),
-                      source: external_exports.object({
-                        type: external_exports.literal("text"),
-                        media_type: external_exports.string(),
-                        data: external_exports.string()
-                      })
+                      source: external_exports.union([
+                        external_exports.object({
+                          type: external_exports.literal("base64"),
+                          media_type: external_exports.literal("application/pdf"),
+                          data: external_exports.string()
+                        }),
+                        external_exports.object({
+                          type: external_exports.literal("text"),
+                          media_type: external_exports.literal("text/plain"),
+                          data: external_exports.string()
+                        })
+                      ])
                     })
                   }),
                   external_exports.object({
@@ -71307,7 +71403,7 @@ var init_dist13 = __esm({
         external_exports.array(
           external_exports.object({
             url: external_exports.string(),
-            title: external_exports.string(),
+            title: external_exports.string().nullable(),
             pageAge: external_exports.string().nullable(),
             encryptedContent: external_exports.string(),
             type: external_exports.literal("web_search_result")
@@ -71349,7 +71445,7 @@ var init_dist13 = __esm({
           url: external_exports.string(),
           content: external_exports.object({
             type: external_exports.literal("document"),
-            title: external_exports.string(),
+            title: external_exports.string().nullable(),
             citations: external_exports.object({ enabled: external_exports.boolean() }).optional(),
             source: external_exports.union([
               external_exports.object({
@@ -72531,15 +72627,15 @@ var init_dist13 = __esm({
             result = await firstChunkReader.read();
           }
           if (((_b8 = result.value) == null ? void 0 : _b8.type) === "error") {
-            const error40 = result.value.error;
+            const error41 = result.value.error;
             throw new APICallError({
-              message: error40.message,
+              message: error41.message,
               url: url3,
               requestBodyValues: body,
-              statusCode: error40.type === "overloaded_error" ? 529 : 500,
+              statusCode: error41.type === "overloaded_error" ? 529 : 500,
               responseHeaders,
-              responseBody: JSON.stringify(error40),
-              isRetryable: error40.type === "overloaded_error"
+              responseBody: JSON.stringify(error41),
+              isRetryable: error41.type === "overloaded_error"
             });
           }
         } finally {
@@ -73209,6 +73305,17 @@ function prepareTools2({
             googleTools2.push({ googleSearchRetrieval: {} });
           }
           break;
+        case "google.enterprise_web_search":
+          if (isGemini2orNewer) {
+            googleTools2.push({ enterpriseWebSearch: {} });
+          } else {
+            toolWarnings.push({
+              type: "unsupported-tool",
+              tool: tool2,
+              details: "Enterprise Web Search requires Gemini 2.0 or newer."
+            });
+          }
+          break;
         case "google.url_context":
           if (isGemini2orNewer) {
             googleTools2.push({ urlContext: {} });
@@ -73259,6 +73366,17 @@ function prepareTools2({
               type: "unsupported-tool",
               tool: tool2,
               details: "The RAG store tool is not supported with other Gemini models than Gemini 2."
+            });
+          }
+          break;
+        case "google.google_maps":
+          if (isGemini2orNewer) {
+            googleTools2.push({ googleMaps: {} });
+          } else {
+            toolWarnings.push({
+              type: "unsupported-tool",
+              tool: tool2,
+              details: "The Google Maps grounding tool is not supported with Gemini models other than Gemini 2 or newer."
             });
           }
           break;
@@ -73378,7 +73496,7 @@ function extractSources({
   groundingMetadata,
   generateId: generateId3
 }) {
-  var _a18, _b8, _c, _d;
+  var _a18, _b8, _c, _d, _e;
   if (!(groundingMetadata == null ? void 0 : groundingMetadata.groundingChunks)) {
     return void 0;
   }
@@ -73442,6 +73560,16 @@ function extractSources({
           mediaType: "application/octet-stream",
           title,
           filename: fileSearchStore.split("/").pop()
+        });
+      }
+    } else if (chunk.maps != null) {
+      if (chunk.maps.uri) {
+        sources.push({
+          type: "source",
+          sourceType: "url",
+          id: generateId3(),
+          url: chunk.maps.uri,
+          title: (_e = chunk.maps.title) != null ? _e : void 0
         });
       }
     }
@@ -73516,7 +73644,7 @@ function createGoogleGenerativeAI(options = {}) {
   provider.tools = googleTools;
   return provider;
 }
-var VERSION9, googleErrorDataSchema, googleFailedResponseHandler, googleGenerativeAIEmbeddingProviderOptions, GoogleGenerativeAIEmbeddingModel, googleGenerativeAITextEmbeddingResponseSchema, googleGenerativeAISingleEmbeddingResponseSchema, googleGenerativeAIProviderOptions, GoogleGenerativeAILanguageModel, getGroundingMetadataSchema, getContentSchema, getSafetyRatingSchema, usageSchema, getUrlContextMetadataSchema, responseSchema, chunkSchema, codeExecution, fileSearchArgsBaseSchema, fileSearchArgsSchema2, fileSearch2, googleSearch, urlContext, vertexRagStore, googleTools, GoogleGenerativeAIImageModel, googleImageResponseSchema, googleImageProviderOptionsSchema, google;
+var VERSION9, googleErrorDataSchema, googleFailedResponseHandler, googleGenerativeAIEmbeddingProviderOptions, GoogleGenerativeAIEmbeddingModel, googleGenerativeAITextEmbeddingResponseSchema, googleGenerativeAISingleEmbeddingResponseSchema, googleGenerativeAIProviderOptions, GoogleGenerativeAILanguageModel, getGroundingMetadataSchema, getContentSchema, getSafetyRatingSchema, usageSchema, getUrlContextMetadataSchema, responseSchema, chunkSchema, codeExecution, enterpriseWebSearch, fileSearchArgsBaseSchema, fileSearchArgsSchema2, fileSearch2, googleMaps, googleSearch, urlContext, vertexRagStore, googleTools, GoogleGenerativeAIImageModel, googleImageResponseSchema, googleImageProviderOptionsSchema, google;
 var init_dist14 = __esm({
   "node_modules/@ai-sdk/google/dist/index.mjs"() {
     init_dist9();
@@ -73546,7 +73674,11 @@ var init_dist14 = __esm({
     init_v42();
     init_dist9();
     init_v42();
-    VERSION9 = true ? "2.0.44" : "0.0.0-test";
+    init_dist9();
+    init_v42();
+    init_dist9();
+    init_v42();
+    VERSION9 = true ? "2.0.49" : "0.0.0-test";
     googleErrorDataSchema = lazySchema(
       () => zodSchema(
         external_exports.object({
@@ -73709,7 +73841,7 @@ var init_dist14 = __esm({
             thinkingBudget: external_exports.number().optional(),
             includeThoughts: external_exports.boolean().optional(),
             // https://ai.google.dev/gemini-api/docs/gemini-3?thinking=high#thinking_level
-            thinkingLevel: external_exports.enum(["low", "medium", "high"]).optional()
+            thinkingLevel: external_exports.enum(["minimal", "low", "medium", "high"]).optional()
           }).optional(),
           /**
            * Optional.
@@ -73799,6 +73931,18 @@ var init_dist14 = __esm({
               "21:9"
             ]).optional(),
             imageSize: external_exports.enum(["1K", "2K", "4K"]).optional()
+          }).optional(),
+          /**
+           * Optional. Configuration for grounding retrieval.
+           * Used to provide location context for Google Maps and Google Search grounding.
+           *
+           * https://cloud.google.com/vertex-ai/generative-ai/docs/grounding/grounding-with-google-maps
+           */
+          retrievalConfig: external_exports.object({
+            latLng: external_exports.object({
+              latitude: external_exports.number(),
+              longitude: external_exports.number()
+            }).optional()
           }).optional()
         })
       )
@@ -73897,7 +74041,10 @@ var init_dist14 = __esm({
             systemInstruction: isGemmaModel ? void 0 : systemInstruction,
             safetySettings: googleOptions == null ? void 0 : googleOptions.safetySettings,
             tools: googleTools2,
-            toolConfig: googleToolConfig,
+            toolConfig: (googleOptions == null ? void 0 : googleOptions.retrievalConfig) ? {
+              ...googleToolConfig,
+              retrievalConfig: googleOptions.retrievalConfig
+            } : googleToolConfig,
             cachedContent: googleOptions == null ? void 0 : googleOptions.cachedContent,
             labels: googleOptions == null ? void 0 : googleOptions.labels
           },
@@ -74275,6 +74422,12 @@ var init_dist14 = __esm({
             title: external_exports.string().nullish(),
             text: external_exports.string().nullish(),
             fileSearchStore: external_exports.string().nullish()
+          }).nullish(),
+          maps: external_exports.object({
+            uri: external_exports.string().nullish(),
+            title: external_exports.string().nullish(),
+            text: external_exports.string().nullish(),
+            placeId: external_exports.string().nullish()
           }).nullish()
         })
       ).nullish(),
@@ -74409,6 +74562,11 @@ var init_dist14 = __esm({
         output: external_exports.string().describe("The output from the code execution.")
       })
     });
+    enterpriseWebSearch = createProviderDefinedToolFactory({
+      id: "google.enterprise_web_search",
+      name: "enterprise_web_search",
+      inputSchema: lazySchema(() => zodSchema(external_exports.object({})))
+    });
     fileSearchArgsBaseSchema = external_exports.object({
       /** The names of the file_search_stores to retrieve from.
        *  Example: `fileSearchStores/my-file-search-store-123`
@@ -74432,6 +74590,11 @@ var init_dist14 = __esm({
       id: "google.file_search",
       name: "file_search",
       inputSchema: fileSearchArgsSchema2
+    });
+    googleMaps = createProviderDefinedToolFactory({
+      id: "google.google_maps",
+      name: "google_maps",
+      inputSchema: lazySchema(() => zodSchema(external_exports.object({})))
     });
     googleSearch = createProviderDefinedToolFactory({
       id: "google.google_search",
@@ -74464,6 +74627,25 @@ var init_dist14 = __esm({
        * Must have name "google_search".
        */
       googleSearch,
+      /**
+       * Creates an Enterprise Web Search tool for grounding responses using a compliance-focused web index.
+       * Designed for highly-regulated industries (finance, healthcare, public sector).
+       * Does not log customer data and supports VPC service controls.
+       * Must have name "enterprise_web_search".
+       *
+       * @note Only available on Vertex AI. Requires Gemini 2.0 or newer.
+       *
+       * @see https://cloud.google.com/vertex-ai/generative-ai/docs/grounding/web-grounding-enterprise
+       */
+      enterpriseWebSearch,
+      /**
+       * Creates a Google Maps grounding tool that gives the model access to Google Maps data.
+       * Must have name "google_maps".
+       *
+       * @see https://ai.google.dev/gemini-api/docs/maps-grounding
+       * @see https://cloud.google.com/vertex-ai/generative-ai/docs/grounding/grounding-with-google-maps
+       */
+      googleMaps,
       /**
        * Creates a URL context tool that gives Google direct access to real-time web content.
        * Must have name "url_context".
@@ -74608,6 +74790,20 @@ var init_dist14 = __esm({
 });
 
 // node_modules/@ai-sdk/openai/dist/internal/index.mjs
+function getOpenAILanguageModelCapabilities2(modelId) {
+  const supportsFlexProcessing = modelId.startsWith("o3") || modelId.startsWith("o4-mini") || modelId.startsWith("gpt-5") && !modelId.startsWith("gpt-5-chat");
+  const supportsPriorityProcessing = modelId.startsWith("gpt-4") || modelId.startsWith("gpt-5-mini") || modelId.startsWith("gpt-5") && !modelId.startsWith("gpt-5-nano") && !modelId.startsWith("gpt-5-chat") || modelId.startsWith("o3") || modelId.startsWith("o4-mini");
+  const isReasoningModel = !(modelId.startsWith("gpt-3") || modelId.startsWith("gpt-4") || modelId.startsWith("chatgpt-4o") || modelId.startsWith("gpt-5-chat"));
+  const supportsNonReasoningParameters = modelId.startsWith("gpt-5.1") || modelId.startsWith("gpt-5.2");
+  const systemMessageMode = isReasoningModel ? "developer" : "system";
+  return {
+    supportsFlexProcessing,
+    supportsPriorityProcessing,
+    isReasoningModel,
+    systemMessageMode,
+    supportsNonReasoningParameters
+  };
+}
 function convertToOpenAIChatMessages2({
   prompt,
   systemMessageMode = "system"
@@ -74865,22 +75061,6 @@ function prepareChatTools2({
       });
     }
   }
-}
-function isReasoningModel2(modelId) {
-  return (modelId.startsWith("o") || modelId.startsWith("gpt-5")) && !modelId.startsWith("gpt-5-chat");
-}
-function supportsFlexProcessing2(modelId) {
-  return modelId.startsWith("o3") || modelId.startsWith("o4-mini") || modelId.startsWith("gpt-5") && !modelId.startsWith("gpt-5-chat");
-}
-function supportsPriorityProcessing2(modelId) {
-  return modelId.startsWith("gpt-4") || modelId.startsWith("gpt-5-mini") || modelId.startsWith("gpt-5") && !modelId.startsWith("gpt-5-nano") && !modelId.startsWith("gpt-5-chat") || modelId.startsWith("o3") || modelId.startsWith("o4-mini");
-}
-function getSystemMessageMode2(modelId) {
-  var _a18, _b8;
-  if (!isReasoningModel2(modelId)) {
-    return "system";
-  }
-  return (_b8 = (_a18 = reasoningModels2[modelId]) == null ? void 0 : _a18.systemMessageMode) != null ? _b8 : "developer";
 }
 function convertToOpenAICompletionPrompt2({
   prompt,
@@ -75437,32 +75617,6 @@ function isResponseAnnotationAddedChunk2(chunk) {
 function isErrorChunk2(chunk) {
   return chunk.type === "error";
 }
-function getResponsesModelConfig2(modelId) {
-  const supportsFlexProcessing22 = modelId.startsWith("o3") || modelId.startsWith("o4-mini") || modelId.startsWith("gpt-5") && !modelId.startsWith("gpt-5-chat");
-  const supportsPriorityProcessing22 = modelId.startsWith("gpt-4") || modelId.startsWith("gpt-5-mini") || modelId.startsWith("gpt-5") && !modelId.startsWith("gpt-5-nano") && !modelId.startsWith("gpt-5-chat") || modelId.startsWith("o3") || modelId.startsWith("o4-mini");
-  const defaults2 = {
-    systemMessageMode: "system",
-    supportsFlexProcessing: supportsFlexProcessing22,
-    supportsPriorityProcessing: supportsPriorityProcessing22
-  };
-  if (modelId.startsWith("gpt-5-chat")) {
-    return {
-      ...defaults2,
-      isReasoningModel: false
-    };
-  }
-  if (modelId.startsWith("o") || modelId.startsWith("gpt-5") || modelId.startsWith("codex-") || modelId.startsWith("computer-use")) {
-    return {
-      ...defaults2,
-      isReasoningModel: true,
-      systemMessageMode: "developer"
-    };
-  }
-  return {
-    ...defaults2,
-    isReasoningModel: false
-  };
-}
 function mapWebSearchOutput2(action) {
   var _a18;
   switch (action.type) {
@@ -75474,13 +75628,17 @@ function mapWebSearchOutput2(action) {
       };
     case "open_page":
       return { action: { type: "openPage", url: action.url } };
-    case "find":
+    case "find_in_page":
       return {
-        action: { type: "find", url: action.url, pattern: action.pattern }
+        action: {
+          type: "findInPage",
+          url: action.url,
+          pattern: action.pattern
+        }
       };
   }
 }
-var openaiErrorDataSchema2, openaiFailedResponseHandler2, openaiChatResponseSchema2, openaiChatChunkSchema2, openaiChatLanguageModelOptions2, OpenAIChatLanguageModel2, reasoningModels2, openaiCompletionResponseSchema2, openaiCompletionChunkSchema2, openaiCompletionProviderOptions2, OpenAICompletionLanguageModel2, openaiEmbeddingProviderOptions2, openaiTextEmbeddingResponseSchema2, OpenAIEmbeddingModel2, openaiImageResponseSchema2, modelMaxImagesPerCall2, hasDefaultResponseFormat2, OpenAIImageModel2, openaiTranscriptionResponseSchema2, openAITranscriptionProviderOptions2, languageMap2, OpenAITranscriptionModel2, openaiSpeechProviderOptionsSchema2, OpenAISpeechModel2, localShellInputSchema2, localShellOutputSchema2, localShell2, openaiResponsesReasoningProviderOptionsSchema2, openaiResponsesChunkSchema2, openaiResponsesResponseSchema2, TOP_LOGPROBS_MAX2, openaiResponsesReasoningModelIds2, openaiResponsesModelIds2, openaiResponsesProviderOptionsSchema2, codeInterpreterInputSchema2, codeInterpreterOutputSchema2, codeInterpreterArgsSchema2, codeInterpreterToolFactory2, codeInterpreter2, comparisonFilterSchema2, compoundFilterSchema2, fileSearchArgsSchema3, fileSearchOutputSchema2, fileSearch3, webSearchArgsSchema2, webSearchInputSchema2, webSearchOutputSchema2, webSearchToolFactory2, webSearchPreviewArgsSchema2, webSearchPreviewInputSchema2, webSearchPreviewOutputSchema2, webSearchPreview2, imageGenerationArgsSchema2, imageGenerationInputSchema2, imageGenerationOutputSchema2, imageGenerationToolFactory2, imageGeneration2, OpenAIResponsesLanguageModel2;
+var openaiErrorDataSchema2, openaiFailedResponseHandler2, openaiChatResponseSchema2, openaiChatChunkSchema2, openaiChatLanguageModelOptions2, OpenAIChatLanguageModel2, openaiCompletionResponseSchema2, openaiCompletionChunkSchema2, openaiCompletionProviderOptions2, OpenAICompletionLanguageModel2, openaiEmbeddingProviderOptions2, openaiTextEmbeddingResponseSchema2, OpenAIEmbeddingModel2, openaiImageResponseSchema2, modelMaxImagesPerCall2, hasDefaultResponseFormat2, OpenAIImageModel2, openaiTranscriptionResponseSchema2, openAITranscriptionProviderOptions2, languageMap2, OpenAITranscriptionModel2, openaiSpeechProviderOptionsSchema2, OpenAISpeechModel2, localShellInputSchema2, localShellOutputSchema2, localShell2, openaiResponsesReasoningProviderOptionsSchema2, openaiResponsesChunkSchema2, openaiResponsesResponseSchema2, TOP_LOGPROBS_MAX2, openaiResponsesReasoningModelIds2, openaiResponsesModelIds2, openaiResponsesProviderOptionsSchema2, codeInterpreterInputSchema2, codeInterpreterOutputSchema2, codeInterpreterArgsSchema2, codeInterpreterToolFactory2, codeInterpreter2, comparisonFilterSchema2, compoundFilterSchema2, fileSearchArgsSchema3, fileSearchOutputSchema2, fileSearch3, webSearchArgsSchema2, webSearchInputSchema2, webSearchOutputSchema2, webSearchToolFactory2, webSearchPreviewArgsSchema2, webSearchPreviewInputSchema2, webSearchPreviewOutputSchema2, webSearchPreview2, imageGenerationArgsSchema2, imageGenerationInputSchema2, imageGenerationOutputSchema2, imageGenerationToolFactory2, imageGeneration2, OpenAIResponsesLanguageModel2;
 var init_internal = __esm({
   "node_modules/@ai-sdk/openai/dist/internal/index.mjs"() {
     init_dist6();
@@ -75579,10 +75737,12 @@ var init_internal = __esm({
                 annotations: external_exports.array(
                   external_exports.object({
                     type: external_exports.literal("url_citation"),
-                    start_index: external_exports.number(),
-                    end_index: external_exports.number(),
-                    url: external_exports.string(),
-                    title: external_exports.string()
+                    url_citation: external_exports.object({
+                      start_index: external_exports.number(),
+                      end_index: external_exports.number(),
+                      url: external_exports.string(),
+                      title: external_exports.string()
+                    })
                   })
                 ).nullish()
               }),
@@ -75646,10 +75806,12 @@ var init_internal = __esm({
                   annotations: external_exports.array(
                     external_exports.object({
                       type: external_exports.literal("url_citation"),
-                      start_index: external_exports.number(),
-                      end_index: external_exports.number(),
-                      url: external_exports.string(),
-                      title: external_exports.string()
+                      url_citation: external_exports.object({
+                        start_index: external_exports.number(),
+                        end_index: external_exports.number(),
+                        url: external_exports.string(),
+                        title: external_exports.string()
+                      })
                     })
                   ).nullish()
                 }).nullish(),
@@ -75721,7 +75883,7 @@ var init_internal = __esm({
           /**
            * Reasoning effort for reasoning models. Defaults to `medium`.
            */
-          reasoningEffort: external_exports.enum(["none", "minimal", "low", "medium", "high"]).optional(),
+          reasoningEffort: external_exports.enum(["none", "minimal", "low", "medium", "high", "xhigh"]).optional(),
           /**
            * Maximum number of completion tokens to generate. Useful for reasoning models.
            */
@@ -75826,6 +75988,7 @@ var init_internal = __esm({
           schema: openaiChatLanguageModelOptions2
         })) != null ? _a18 : {};
         const structuredOutputs = (_b8 = openaiOptions.structuredOutputs) != null ? _b8 : true;
+        const modelCapabilities = getOpenAILanguageModelCapabilities2(this.modelId);
         if (topK != null) {
           warnings.push({
             type: "unsupported-setting",
@@ -75842,7 +76005,7 @@ var init_internal = __esm({
         const { messages, warnings: messageWarnings } = convertToOpenAIChatMessages2(
           {
             prompt,
-            systemMessageMode: getSystemMessageMode2(this.modelId)
+            systemMessageMode: modelCapabilities.systemMessageMode
           }
         );
         warnings.push(...messageWarnings);
@@ -75888,22 +76051,31 @@ var init_internal = __esm({
           // messages:
           messages
         };
-        if (isReasoningModel2(this.modelId)) {
-          if (baseArgs.temperature != null) {
-            baseArgs.temperature = void 0;
-            warnings.push({
-              type: "unsupported-setting",
-              setting: "temperature",
-              details: "temperature is not supported for reasoning models"
-            });
-          }
-          if (baseArgs.top_p != null) {
-            baseArgs.top_p = void 0;
-            warnings.push({
-              type: "unsupported-setting",
-              setting: "topP",
-              details: "topP is not supported for reasoning models"
-            });
+        if (modelCapabilities.isReasoningModel) {
+          if (openaiOptions.reasoningEffort !== "none" || !modelCapabilities.supportsNonReasoningParameters) {
+            if (baseArgs.temperature != null) {
+              baseArgs.temperature = void 0;
+              warnings.push({
+                type: "unsupported-setting",
+                setting: "temperature",
+                details: "temperature is not supported for reasoning models"
+              });
+            }
+            if (baseArgs.top_p != null) {
+              baseArgs.top_p = void 0;
+              warnings.push({
+                type: "unsupported-setting",
+                setting: "topP",
+                details: "topP is not supported for reasoning models"
+              });
+            }
+            if (baseArgs.logprobs != null) {
+              baseArgs.logprobs = void 0;
+              warnings.push({
+                type: "other",
+                message: "logprobs is not supported for reasoning models"
+              });
+            }
           }
           if (baseArgs.frequency_penalty != null) {
             baseArgs.frequency_penalty = void 0;
@@ -75926,13 +76098,6 @@ var init_internal = __esm({
             warnings.push({
               type: "other",
               message: "logitBias is not supported for reasoning models"
-            });
-          }
-          if (baseArgs.logprobs != null) {
-            baseArgs.logprobs = void 0;
-            warnings.push({
-              type: "other",
-              message: "logprobs is not supported for reasoning models"
             });
           }
           if (baseArgs.top_logprobs != null) {
@@ -75958,7 +76123,7 @@ var init_internal = __esm({
             });
           }
         }
-        if (openaiOptions.serviceTier === "flex" && !supportsFlexProcessing2(this.modelId)) {
+        if (openaiOptions.serviceTier === "flex" && !modelCapabilities.supportsFlexProcessing) {
           warnings.push({
             type: "unsupported-setting",
             setting: "serviceTier",
@@ -75966,7 +76131,7 @@ var init_internal = __esm({
           });
           baseArgs.service_tier = void 0;
         }
-        if (openaiOptions.serviceTier === "priority" && !supportsPriorityProcessing2(this.modelId)) {
+        if (openaiOptions.serviceTier === "priority" && !modelCapabilities.supportsPriorityProcessing) {
           warnings.push({
             type: "unsupported-setting",
             setting: "serviceTier",
@@ -76033,8 +76198,8 @@ var init_internal = __esm({
             type: "source",
             sourceType: "url",
             id: generateId(),
-            url: annotation.url,
-            title: annotation.title
+            url: annotation.url_citation.url,
+            title: annotation.url_citation.title
           });
         }
         const completionTokenDetails = (_d = response.usage) == null ? void 0 : _d.completion_tokens_details;
@@ -76263,8 +76428,8 @@ var init_internal = __esm({
                       type: "source",
                       sourceType: "url",
                       id: generateId(),
-                      url: annotation.url,
-                      title: annotation.title
+                      url: annotation.url_citation.url,
+                      title: annotation.url_citation.title
                     });
                   }
                 }
@@ -76285,26 +76450,6 @@ var init_internal = __esm({
           request: { body },
           response: { headers: responseHeaders }
         };
-      }
-    };
-    reasoningModels2 = {
-      o3: {
-        systemMessageMode: "developer"
-      },
-      "o3-2025-04-16": {
-        systemMessageMode: "developer"
-      },
-      "o3-mini": {
-        systemMessageMode: "developer"
-      },
-      "o3-mini-2025-01-31": {
-        systemMessageMode: "developer"
-      },
-      "o4-mini": {
-        systemMessageMode: "developer"
-      },
-      "o4-mini-2025-04-16": {
-        systemMessageMode: "developer"
       }
     };
     openaiCompletionResponseSchema2 = lazyValidator(
@@ -76749,11 +76894,13 @@ var init_internal = __esm({
       "dall-e-3": 1,
       "dall-e-2": 10,
       "gpt-image-1": 10,
-      "gpt-image-1-mini": 10
+      "gpt-image-1-mini": 10,
+      "gpt-image-1.5": 10
     };
     hasDefaultResponseFormat2 = /* @__PURE__ */ new Set([
       "gpt-image-1",
-      "gpt-image-1-mini"
+      "gpt-image-1-mini",
+      "gpt-image-1.5"
     ]);
     OpenAIImageModel2 = class {
       constructor(modelId, config7) {
@@ -77345,7 +77492,7 @@ var init_internal = __esm({
                     url: external_exports.string().nullish()
                   }),
                   external_exports.object({
-                    type: external_exports.literal("find"),
+                    type: external_exports.literal("find_in_page"),
                     url: external_exports.string().nullish(),
                     pattern: external_exports.string().nullish()
                   })
@@ -77555,7 +77702,7 @@ var init_internal = __esm({
                     url: external_exports.string().nullish()
                   }),
                   external_exports.object({
-                    type: external_exports.literal("find"),
+                    type: external_exports.literal("find_in_page"),
                     url: external_exports.string().nullish(),
                     pattern: external_exports.string().nullish()
                   })
@@ -77672,7 +77819,11 @@ var init_internal = __esm({
       "gpt-5.1",
       "gpt-5.1-chat-latest",
       "gpt-5.1-codex-mini",
-      "gpt-5.1-codex"
+      "gpt-5.1-codex",
+      "gpt-5.1-codex-max",
+      "gpt-5.2",
+      "gpt-5.2-chat-latest",
+      "gpt-5.2-pro"
     ];
     openaiResponsesModelIds2 = [
       "gpt-4.1",
@@ -77755,6 +77906,16 @@ var init_internal = __esm({
            * @default 'in_memory'
            */
           promptCacheRetention: external_exports.enum(["in_memory", "24h"]).nullish(),
+          /**
+           * Reasoning effort for reasoning models. Defaults to `medium`. If you use
+           * `providerOptions` to set the `reasoningEffort` option, this model setting will be ignored.
+           * Valid values: 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh'
+           *
+           * The 'none' type for `reasoningEffort` is only available for OpenAI's GPT-5.1
+           * models. Also, the 'xhigh' type for `reasoningEffort` is only available for
+           * OpenAI's GPT-5.1-Codex-Max model. Setting `reasoningEffort` to 'none' or 'xhigh' with unsupported models will result in
+           * an error.
+           */
           reasoningEffort: external_exports.string().nullish(),
           reasoningSummary: external_exports.string().nullish(),
           safetyIdentifier: external_exports.string().nullish(),
@@ -77810,8 +77971,8 @@ var init_internal = __esm({
     };
     comparisonFilterSchema2 = external_exports.object({
       key: external_exports.string(),
-      type: external_exports.enum(["eq", "ne", "gt", "gte", "lt", "lte"]),
-      value: external_exports.union([external_exports.string(), external_exports.number(), external_exports.boolean()])
+      type: external_exports.enum(["eq", "ne", "gt", "gte", "lt", "lte", "in", "nin"]),
+      value: external_exports.union([external_exports.string(), external_exports.number(), external_exports.boolean(), external_exports.array(external_exports.string())])
     });
     compoundFilterSchema2 = external_exports.object({
       type: external_exports.enum(["and", "or"]),
@@ -77884,7 +78045,7 @@ var init_internal = __esm({
               url: external_exports.string().nullish()
             }),
             external_exports.object({
-              type: external_exports.literal("find"),
+              type: external_exports.literal("findInPage"),
               url: external_exports.string().nullish(),
               pattern: external_exports.string().nullish()
             })
@@ -77934,7 +78095,7 @@ var init_internal = __esm({
               url: external_exports.string().nullish()
             }),
             external_exports.object({
-              type: external_exports.literal("find"),
+              type: external_exports.literal("findInPage"),
               url: external_exports.string().nullish(),
               pattern: external_exports.string().nullish()
             })
@@ -78010,7 +78171,7 @@ var init_internal = __esm({
       }) {
         var _a18, _b8, _c, _d;
         const warnings = [];
-        const modelConfig = getResponsesModelConfig2(this.modelId);
+        const modelCapabilities = getOpenAILanguageModelCapabilities2(this.modelId);
         if (topK != null) {
           warnings.push({ type: "unsupported-setting", setting: "topK" });
         }
@@ -78046,7 +78207,7 @@ var init_internal = __esm({
         }
         const { input, warnings: inputWarnings } = await convertToOpenAIResponsesInput2({
           prompt,
-          systemMessageMode: modelConfig.systemMessageMode,
+          systemMessageMode: modelCapabilities.systemMessageMode,
           fileIdPrefixes: this.config.fileIdPrefixes,
           store: (_a18 = openaiOptions == null ? void 0 : openaiOptions.store) != null ? _a18 : true,
           hasLocalShellTool: hasOpenAITool("openai.local_shell")
@@ -78080,7 +78241,7 @@ var init_internal = __esm({
           addInclude("code_interpreter_call.outputs");
         }
         const store = openaiOptions == null ? void 0 : openaiOptions.store;
-        if (store === false && modelConfig.isReasoningModel) {
+        if (store === false && modelCapabilities.isReasoningModel) {
           addInclude("reasoning.encrypted_content");
         }
         const baseArgs = {
@@ -78122,7 +78283,7 @@ var init_internal = __esm({
           top_logprobs: topLogprobs,
           truncation: openaiOptions == null ? void 0 : openaiOptions.truncation,
           // model-specific settings:
-          ...modelConfig.isReasoningModel && ((openaiOptions == null ? void 0 : openaiOptions.reasoningEffort) != null || (openaiOptions == null ? void 0 : openaiOptions.reasoningSummary) != null) && {
+          ...modelCapabilities.isReasoningModel && ((openaiOptions == null ? void 0 : openaiOptions.reasoningEffort) != null || (openaiOptions == null ? void 0 : openaiOptions.reasoningSummary) != null) && {
             reasoning: {
               ...(openaiOptions == null ? void 0 : openaiOptions.reasoningEffort) != null && {
                 effort: openaiOptions.reasoningEffort
@@ -78133,22 +78294,24 @@ var init_internal = __esm({
             }
           }
         };
-        if (modelConfig.isReasoningModel) {
-          if (baseArgs.temperature != null) {
-            baseArgs.temperature = void 0;
-            warnings.push({
-              type: "unsupported-setting",
-              setting: "temperature",
-              details: "temperature is not supported for reasoning models"
-            });
-          }
-          if (baseArgs.top_p != null) {
-            baseArgs.top_p = void 0;
-            warnings.push({
-              type: "unsupported-setting",
-              setting: "topP",
-              details: "topP is not supported for reasoning models"
-            });
+        if (modelCapabilities.isReasoningModel) {
+          if (!((openaiOptions == null ? void 0 : openaiOptions.reasoningEffort) === "none" && modelCapabilities.supportsNonReasoningParameters)) {
+            if (baseArgs.temperature != null) {
+              baseArgs.temperature = void 0;
+              warnings.push({
+                type: "unsupported-setting",
+                setting: "temperature",
+                details: "temperature is not supported for reasoning models"
+              });
+            }
+            if (baseArgs.top_p != null) {
+              baseArgs.top_p = void 0;
+              warnings.push({
+                type: "unsupported-setting",
+                setting: "topP",
+                details: "topP is not supported for reasoning models"
+              });
+            }
           }
         } else {
           if ((openaiOptions == null ? void 0 : openaiOptions.reasoningEffort) != null) {
@@ -78166,7 +78329,7 @@ var init_internal = __esm({
             });
           }
         }
-        if ((openaiOptions == null ? void 0 : openaiOptions.serviceTier) === "flex" && !modelConfig.supportsFlexProcessing) {
+        if ((openaiOptions == null ? void 0 : openaiOptions.serviceTier) === "flex" && !modelCapabilities.supportsFlexProcessing) {
           warnings.push({
             type: "unsupported-setting",
             setting: "serviceTier",
@@ -78174,7 +78337,7 @@ var init_internal = __esm({
           });
           delete baseArgs.service_tier;
         }
-        if ((openaiOptions == null ? void 0 : openaiOptions.serviceTier) === "priority" && !modelConfig.supportsPriorityProcessing) {
+        if ((openaiOptions == null ? void 0 : openaiOptions.serviceTier) === "priority" && !modelCapabilities.supportsPriorityProcessing) {
           warnings.push({
             type: "unsupported-setting",
             setting: "serviceTier",
@@ -79114,7 +79277,7 @@ var init_dist15 = __esm({
       imageGeneration: imageGeneration2,
       webSearchPreview: webSearchPreview2
     };
-    VERSION10 = true ? "2.0.79" : "0.0.0-test";
+    VERSION10 = true ? "2.0.90" : "0.0.0-test";
     azure = createAzure();
   }
 });
@@ -79904,7 +80067,7 @@ var init_dist16 = __esm({
       data: external_exports.array(external_exports.object({ embedding: external_exports.array(external_exports.number()) })),
       usage: external_exports.object({ prompt_tokens: external_exports.number() }).nullish()
     });
-    VERSION11 = true ? "2.0.25" : "0.0.0-test";
+    VERSION11 = true ? "2.0.26" : "0.0.0-test";
     mistral = createMistral();
   }
 });
@@ -80799,7 +80962,7 @@ var init_dist17 = __esm({
     groqTools = {
       browserSearch
     };
-    VERSION12 = true ? "2.0.32" : "0.0.0-test";
+    VERSION12 = true ? "2.0.33" : "0.0.0-test";
     groq = createGroq();
   }
 });
@@ -81151,7 +81314,7 @@ var init_dist18 = __esm({
         this.config = config7;
         this.failedResponseHandler = createJsonErrorResponseHandler({
           errorSchema: deepSeekErrorSchema,
-          errorToMessage: (error40) => error40.error.message
+          errorToMessage: (error41) => error41.error.message
         });
       }
       get provider() {
@@ -81524,7 +81687,7 @@ var init_dist18 = __esm({
         };
       }
     };
-    VERSION13 = true ? "1.0.31" : "0.0.0-test";
+    VERSION13 = true ? "1.0.32" : "0.0.0-test";
     deepseek = createDeepSeek();
   }
 });
@@ -81599,12 +81762,12 @@ var require_dist2 = __commonJS({
        * @param {unknown} error - The error to check.
        * @returns {boolean} True if the error is an AI SDK Error, false otherwise.
        */
-      static isInstance(error40) {
-        return _AISDKError5.hasMarker(error40, marker18);
+      static isInstance(error41) {
+        return _AISDKError5.hasMarker(error41, marker18);
       }
-      static hasMarker(error40, marker153) {
+      static hasMarker(error41, marker153) {
         const markerSymbol = Symbol.for(marker153);
-        return error40 != null && typeof error40 === "object" && markerSymbol in error40 && typeof error40[markerSymbol] === "boolean" && error40[markerSymbol] === true;
+        return error41 != null && typeof error41 === "object" && markerSymbol in error41 && typeof error41[markerSymbol] === "boolean" && error41[markerSymbol] === true;
       }
     };
     _a18 = symbol19;
@@ -81639,8 +81802,8 @@ var require_dist2 = __commonJS({
         this.isRetryable = isRetryable;
         this.data = data;
       }
-      static isInstance(error40) {
-        return AISDKError3.hasMarker(error40, marker25);
+      static isInstance(error41) {
+        return AISDKError3.hasMarker(error41, marker25);
       }
     };
     _a25 = symbol25;
@@ -81654,22 +81817,22 @@ var require_dist2 = __commonJS({
         super({ name: name25, message });
         this[_a35] = true;
       }
-      static isInstance(error40) {
-        return AISDKError3.hasMarker(error40, marker35);
+      static isInstance(error41) {
+        return AISDKError3.hasMarker(error41, marker35);
       }
     };
     _a35 = symbol35;
-    function getErrorMessage4(error40) {
-      if (error40 == null) {
+    function getErrorMessage4(error41) {
+      if (error41 == null) {
         return "unknown error";
       }
-      if (typeof error40 === "string") {
-        return error40;
+      if (typeof error41 === "string") {
+        return error41;
       }
-      if (error40 instanceof Error) {
-        return error40.message;
+      if (error41 instanceof Error) {
+        return error41.message;
       }
-      return JSON.stringify(error40);
+      return JSON.stringify(error41);
     }
     var name35 = "AI_InvalidArgumentError";
     var marker45 = `vercel.ai.error.${name35}`;
@@ -81685,8 +81848,8 @@ var require_dist2 = __commonJS({
         this[_a45] = true;
         this.argument = argument;
       }
-      static isInstance(error40) {
-        return AISDKError3.hasMarker(error40, marker45);
+      static isInstance(error41) {
+        return AISDKError3.hasMarker(error41, marker45);
       }
     };
     _a45 = symbol45;
@@ -81704,8 +81867,8 @@ var require_dist2 = __commonJS({
         this[_a55] = true;
         this.prompt = prompt;
       }
-      static isInstance(error40) {
-        return AISDKError3.hasMarker(error40, marker55);
+      static isInstance(error41) {
+        return AISDKError3.hasMarker(error41, marker55);
       }
     };
     _a55 = symbol55;
@@ -81722,8 +81885,8 @@ var require_dist2 = __commonJS({
         this[_a65] = true;
         this.data = data;
       }
-      static isInstance(error40) {
-        return AISDKError3.hasMarker(error40, marker65);
+      static isInstance(error41) {
+        return AISDKError3.hasMarker(error41, marker65);
       }
     };
     _a65 = symbol65;
@@ -81742,8 +81905,8 @@ Error message: ${getErrorMessage4(cause)}`,
         this[_a75] = true;
         this.text = text2;
       }
-      static isInstance(error40) {
-        return AISDKError3.hasMarker(error40, marker75);
+      static isInstance(error41) {
+        return AISDKError3.hasMarker(error41, marker75);
       }
     };
     _a75 = symbol75;
@@ -81757,8 +81920,8 @@ Error message: ${getErrorMessage4(cause)}`,
         super({ name: name74, message });
         this[_a84] = true;
       }
-      static isInstance(error40) {
-        return AISDKError3.hasMarker(error40, marker84);
+      static isInstance(error41) {
+        return AISDKError3.hasMarker(error41, marker84);
       }
     };
     _a84 = symbol84;
@@ -81772,8 +81935,8 @@ Error message: ${getErrorMessage4(cause)}`,
         super({ name: name84, message });
         this[_a94] = true;
       }
-      static isInstance(error40) {
-        return AISDKError3.hasMarker(error40, marker94);
+      static isInstance(error41) {
+        return AISDKError3.hasMarker(error41, marker94);
       }
     };
     _a94 = symbol94;
@@ -81789,8 +81952,8 @@ Error message: ${getErrorMessage4(cause)}`,
         super({ name: name94, message });
         this[_a104] = true;
       }
-      static isInstance(error40) {
-        return AISDKError3.hasMarker(error40, marker104);
+      static isInstance(error41) {
+        return AISDKError3.hasMarker(error41, marker104);
       }
     };
     _a104 = symbol104;
@@ -81810,8 +81973,8 @@ Error message: ${getErrorMessage4(cause)}`,
         this.modelId = modelId;
         this.modelType = modelType;
       }
-      static isInstance(error40) {
-        return AISDKError3.hasMarker(error40, marker114);
+      static isInstance(error41) {
+        return AISDKError3.hasMarker(error41, marker114);
       }
     };
     _a114 = symbol114;
@@ -81831,8 +81994,8 @@ Error message: ${getErrorMessage4(cause)}`,
         this.maxEmbeddingsPerCall = options.maxEmbeddingsPerCall;
         this.values = options.values;
       }
-      static isInstance(error40) {
-        return AISDKError3.hasMarker(error40, marker124);
+      static isInstance(error41) {
+        return AISDKError3.hasMarker(error41, marker124);
       }
     };
     _a124 = symbol124;
@@ -81851,8 +82014,8 @@ Error message: ${getErrorMessage4(cause)}`,
         this[_a134] = true;
         this.value = value;
       }
-      static isInstance(error40) {
-        return AISDKError3.hasMarker(error40, marker134);
+      static isInstance(error41) {
+        return AISDKError3.hasMarker(error41, marker134);
       }
       /**
        * Wraps an error into a TypeValidationError.
@@ -81886,8 +82049,8 @@ Error message: ${getErrorMessage4(cause)}`,
         this[_a144] = true;
         this.functionality = functionality;
       }
-      static isInstance(error40) {
-        return AISDKError3.hasMarker(error40, marker144);
+      static isInstance(error41) {
+        return AISDKError3.hasMarker(error41, marker144);
       }
     };
     _a144 = symbol144;
@@ -82144,8 +82307,8 @@ var require_dist3 = __commonJS({
             } else {
               controller.enqueue(value);
             }
-          } catch (error40) {
-            controller.error(error40);
+          } catch (error41) {
+            controller.error(error41);
           }
         },
         /**
@@ -82276,17 +82439,17 @@ var require_dist3 = __commonJS({
       return (size) => `${prefix}${separator}${generator(size)}`;
     };
     var generateId3 = createIdGenerator3();
-    function getErrorMessage4(error40) {
-      if (error40 == null) {
+    function getErrorMessage4(error41) {
+      if (error41 == null) {
         return "unknown error";
       }
-      if (typeof error40 === "string") {
-        return error40;
+      if (typeof error41 === "string") {
+        return error41;
       }
-      if (error40 instanceof Error) {
-        return error40.message;
+      if (error41 instanceof Error) {
+        return error41.message;
       }
-      return JSON.stringify(error40);
+      return JSON.stringify(error41);
     }
     var import_provider210 = require_dist2();
     function removeUndefinedEntries3(record2) {
@@ -82294,8 +82457,8 @@ var require_dist3 = __commonJS({
         Object.entries(record2).filter(([_key, value]) => value != null)
       );
     }
-    function isAbortError3(error40) {
-      return error40 instanceof Error && (error40.name === "AbortError" || error40.name === "TimeoutError");
+    function isAbortError3(error41) {
+      return error41 instanceof Error && (error41.name === "AbortError" || error41.name === "TimeoutError");
     }
     var getOriginalFetch3 = () => globalThis.fetch;
     var getFromApi2 = async ({
@@ -82321,13 +82484,13 @@ var require_dist3 = __commonJS({
               url: url3,
               requestBodyValues: {}
             });
-          } catch (error40) {
-            if (isAbortError3(error40) || import_provider210.APICallError.isInstance(error40)) {
-              throw error40;
+          } catch (error41) {
+            if (isAbortError3(error41) || import_provider210.APICallError.isInstance(error41)) {
+              throw error41;
             }
             throw new import_provider210.APICallError({
               message: "Failed to process error response",
-              cause: error40,
+              cause: error41,
               statusCode: response.status,
               url: url3,
               responseHeaders,
@@ -82342,27 +82505,27 @@ var require_dist3 = __commonJS({
             url: url3,
             requestBodyValues: {}
           });
-        } catch (error40) {
-          if (error40 instanceof Error) {
-            if (isAbortError3(error40) || import_provider210.APICallError.isInstance(error40)) {
-              throw error40;
+        } catch (error41) {
+          if (error41 instanceof Error) {
+            if (isAbortError3(error41) || import_provider210.APICallError.isInstance(error41)) {
+              throw error41;
             }
           }
           throw new import_provider210.APICallError({
             message: "Failed to process successful response",
-            cause: error40,
+            cause: error41,
             statusCode: response.status,
             url: url3,
             responseHeaders,
             requestBodyValues: {}
           });
         }
-      } catch (error40) {
-        if (isAbortError3(error40)) {
-          throw error40;
+      } catch (error41) {
+        if (isAbortError3(error41)) {
+          throw error41;
         }
-        if (error40 instanceof TypeError && error40.message === "fetch failed") {
-          const cause = error40.cause;
+        if (error41 instanceof TypeError && error41.message === "fetch failed") {
+          const cause = error41.cause;
           if (cause != null) {
             throw new import_provider210.APICallError({
               message: `Cannot connect to API: ${cause.message}`,
@@ -82373,7 +82536,7 @@ var require_dist3 = __commonJS({
             });
           }
         }
-        throw error40;
+        throw error41;
       }
     };
     var import_provider310 = require_dist2();
@@ -82504,10 +82667,10 @@ var require_dist3 = __commonJS({
           success: false,
           error: import_provider510.TypeValidationError.wrap({ value, cause: result.error })
         };
-      } catch (error40) {
+      } catch (error41) {
         return {
           success: false,
-          error: import_provider510.TypeValidationError.wrap({ value, cause: error40 })
+          error: import_provider510.TypeValidationError.wrap({ value, cause: error41 })
         };
       }
     }
@@ -82521,11 +82684,11 @@ var require_dist3 = __commonJS({
           return value;
         }
         return validateTypes3({ value, schema });
-      } catch (error40) {
-        if (import_provider63.JSONParseError.isInstance(error40) || import_provider63.TypeValidationError.isInstance(error40)) {
-          throw error40;
+      } catch (error41) {
+        if (import_provider63.JSONParseError.isInstance(error41) || import_provider63.TypeValidationError.isInstance(error41)) {
+          throw error41;
         }
-        throw new import_provider63.JSONParseError({ text: text2, cause: error40 });
+        throw new import_provider63.JSONParseError({ text: text2, cause: error41 });
       }
     }
     function safeParseJSON3({
@@ -82539,10 +82702,10 @@ var require_dist3 = __commonJS({
         }
         const validationResult = safeValidateTypes3({ value, schema });
         return validationResult.success ? { ...validationResult, rawValue: value } : validationResult;
-      } catch (error40) {
+      } catch (error41) {
         return {
           success: false,
-          error: import_provider63.JSONParseError.isInstance(error40) ? error40 : new import_provider63.JSONParseError({ text: text2, cause: error40 })
+          error: import_provider63.JSONParseError.isInstance(error41) ? error41 : new import_provider63.JSONParseError({ text: text2, cause: error41 })
         };
       }
     }
@@ -82646,13 +82809,13 @@ var require_dist3 = __commonJS({
               url: url3,
               requestBodyValues: body.values
             });
-          } catch (error40) {
-            if (isAbortError3(error40) || import_provider82.APICallError.isInstance(error40)) {
-              throw error40;
+          } catch (error41) {
+            if (isAbortError3(error41) || import_provider82.APICallError.isInstance(error41)) {
+              throw error41;
             }
             throw new import_provider82.APICallError({
               message: "Failed to process error response",
-              cause: error40,
+              cause: error41,
               statusCode: response.status,
               url: url3,
               responseHeaders,
@@ -82667,27 +82830,27 @@ var require_dist3 = __commonJS({
             url: url3,
             requestBodyValues: body.values
           });
-        } catch (error40) {
-          if (error40 instanceof Error) {
-            if (isAbortError3(error40) || import_provider82.APICallError.isInstance(error40)) {
-              throw error40;
+        } catch (error41) {
+          if (error41 instanceof Error) {
+            if (isAbortError3(error41) || import_provider82.APICallError.isInstance(error41)) {
+              throw error41;
             }
           }
           throw new import_provider82.APICallError({
             message: "Failed to process successful response",
-            cause: error40,
+            cause: error41,
             statusCode: response.status,
             url: url3,
             responseHeaders,
             requestBodyValues: body.values
           });
         }
-      } catch (error40) {
-        if (isAbortError3(error40)) {
-          throw error40;
+      } catch (error41) {
+        if (isAbortError3(error41)) {
+          throw error41;
         }
-        if (error40 instanceof TypeError && error40.message === "fetch failed") {
-          const cause = error40.cause;
+        if (error41 instanceof TypeError && error41.message === "fetch failed") {
+          const cause = error41.cause;
           if (cause != null) {
             throw new import_provider82.APICallError({
               message: `Cannot connect to API: ${cause.message}`,
@@ -82699,7 +82862,7 @@ var require_dist3 = __commonJS({
             });
           }
         }
-        throw error40;
+        throw error41;
       }
     };
     async function resolve2(value) {
@@ -82856,7 +83019,7 @@ var require_dist3 = __commonJS({
           responseHeaders,
           value: new Uint8Array(buffer)
         };
-      } catch (error40) {
+      } catch (error41) {
         throw new import_provider92.APICallError({
           message: "Failed to read response as array buffer",
           url: url3,
@@ -82864,7 +83027,7 @@ var require_dist3 = __commonJS({
           statusCode: response.status,
           responseHeaders,
           responseBody: void 0,
-          cause: error40
+          cause: error41
         });
       }
     };
@@ -83101,8 +83264,8 @@ var require_ZodError = __commonJS({
           return issue2.message;
         };
         const fieldErrors = { _errors: [] };
-        const processError = (error40) => {
-          for (const issue2 of error40.issues) {
+        const processError = (error41) => {
+          for (const issue2 of error41.issues) {
             if (issue2.code === "invalid_union") {
               issue2.unionErrors.map(processError);
             } else if (issue2.code === "invalid_return_type") {
@@ -83166,8 +83329,8 @@ var require_ZodError = __commonJS({
     };
     exports2.ZodError = ZodError3;
     ZodError3.create = (issues) => {
-      const error40 = new ZodError3(issues);
-      return error40;
+      const error41 = new ZodError3(issues);
+      return error41;
     };
   }
 });
@@ -83504,8 +83667,8 @@ var require_types = __commonJS({
           get error() {
             if (this._error)
               return this._error;
-            const error40 = new ZodError_js_1.ZodError(ctx.common.issues);
-            this._error = error40;
+            const error41 = new ZodError_js_1.ZodError(ctx.common.issues);
+            this._error = error41;
             return this._error;
           }
         };
@@ -86184,25 +86347,25 @@ var require_types = __commonJS({
           });
           return parseUtil_js_1.INVALID;
         }
-        function makeArgsIssue(args, error40) {
+        function makeArgsIssue(args, error41) {
           return (0, parseUtil_js_1.makeIssue)({
             data: args,
             path: ctx.path,
             errorMaps: [ctx.common.contextualErrorMap, ctx.schemaErrorMap, (0, errors_js_1.getErrorMap)(), errors_js_1.defaultErrorMap].filter((x) => !!x),
             issueData: {
               code: ZodError_js_1.ZodIssueCode.invalid_arguments,
-              argumentsError: error40
+              argumentsError: error41
             }
           });
         }
-        function makeReturnsIssue(returns, error40) {
+        function makeReturnsIssue(returns, error41) {
           return (0, parseUtil_js_1.makeIssue)({
             data: returns,
             path: ctx.path,
             errorMaps: [ctx.common.contextualErrorMap, ctx.schemaErrorMap, (0, errors_js_1.getErrorMap)(), errors_js_1.defaultErrorMap].filter((x) => !!x),
             issueData: {
               code: ZodError_js_1.ZodIssueCode.invalid_return_type,
-              returnTypeError: error40
+              returnTypeError: error41
             }
           });
         }
@@ -86211,15 +86374,15 @@ var require_types = __commonJS({
         if (this._def.returns instanceof ZodPromise3) {
           const me = this;
           return (0, parseUtil_js_1.OK)(async function(...args) {
-            const error40 = new ZodError_js_1.ZodError([]);
+            const error41 = new ZodError_js_1.ZodError([]);
             const parsedArgs = await me._def.args.parseAsync(args, params).catch((e2) => {
-              error40.addIssue(makeArgsIssue(args, e2));
-              throw error40;
+              error41.addIssue(makeArgsIssue(args, e2));
+              throw error41;
             });
             const result = await Reflect.apply(fn, this, parsedArgs);
             const parsedReturns = await me._def.returns._def.type.parseAsync(result, params).catch((e2) => {
-              error40.addIssue(makeReturnsIssue(result, e2));
-              throw error40;
+              error41.addIssue(makeReturnsIssue(result, e2));
+              throw error41;
             });
             return parsedReturns;
           });
@@ -87341,7 +87504,7 @@ var require_dist5 = __commonJS({
     var import_provider_utils510 = require_dist3();
     var import_zod2 = require_zod();
     var import_provider62 = require_dist2();
-    var import_provider_utils134 = require_dist3();
+    var import_provider_utils136 = require_dist3();
     function convertToOllamaChatMessages(prompt) {
       const messages = [];
       for (const { content, role } of prompt) {
@@ -87362,7 +87525,7 @@ var require_dist5 = __commonJS({
                     });
                   } else if (current.type === "image" && current.image instanceof Uint8Array) {
                     previous.images = previous.images || [];
-                    previous.images.push((0, import_provider_utils134.convertUint8ArrayToBase64)(current.image));
+                    previous.images.push((0, import_provider_utils136.convertUint8ArrayToBase64)(current.image));
                   }
                   return previous;
                 },
@@ -88086,17 +88249,17 @@ var require_dist5 = __commonJS({
 });
 
 // node_modules/@openrouter/ai-sdk-provider/dist/index.mjs
-function getErrorMessage3(error40) {
-  if (error40 == null) {
+function getErrorMessage3(error41) {
+  if (error41 == null) {
     return "unknown error";
   }
-  if (typeof error40 === "string") {
-    return error40;
+  if (typeof error41 === "string") {
+    return error41;
   }
-  if (error40 instanceof Error) {
-    return error40.message;
+  if (error41 instanceof Error) {
+    return error41.message;
   }
-  return JSON.stringify(error40);
+  return JSON.stringify(error41);
 }
 function noop3(_arg) {
 }
@@ -88203,20 +88366,20 @@ function combineHeaders2(...headers) {
 function extractResponseHeaders2(response) {
   return Object.fromEntries([...response.headers]);
 }
-function isAbortError2(error40) {
-  return (error40 instanceof Error || error40 instanceof DOMException) && (error40.name === "AbortError" || error40.name === "ResponseAborted" || // Next.js
-  error40.name === "TimeoutError");
+function isAbortError2(error41) {
+  return (error41 instanceof Error || error41 instanceof DOMException) && (error41.name === "AbortError" || error41.name === "ResponseAborted" || // Next.js
+  error41.name === "TimeoutError");
 }
 function handleFetchError2({
-  error: error40,
+  error: error41,
   url: url3,
   requestBodyValues
 }) {
-  if (isAbortError2(error40)) {
-    return error40;
+  if (isAbortError2(error41)) {
+    return error41;
   }
-  if (error40 instanceof TypeError && FETCH_FAILED_ERROR_MESSAGES2.includes(error40.message.toLowerCase())) {
-    const cause = error40.cause;
+  if (error41 instanceof TypeError && FETCH_FAILED_ERROR_MESSAGES2.includes(error41.message.toLowerCase())) {
+    const cause = error41.cause;
     if (cause != null) {
       return new APICallError2({
         message: `Cannot connect to API: ${cause.message}`,
@@ -88228,7 +88391,7 @@ function handleFetchError2({
       });
     }
   }
-  return error40;
+  return error41;
 }
 function removeUndefinedEntries(record2) {
   return Object.fromEntries(
@@ -88357,10 +88520,10 @@ async function safeValidateTypes2({
       error: TypeValidationError2.wrap({ value, cause: result.error }),
       rawValue: value
     };
-  } catch (error40) {
+  } catch (error41) {
     return {
       success: false,
-      error: TypeValidationError2.wrap({ value, cause: error40 }),
+      error: TypeValidationError2.wrap({ value, cause: error41 }),
       rawValue: value
     };
   }
@@ -88375,11 +88538,11 @@ async function parseJSON2({
       return value;
     }
     return validateTypes2({ value, schema });
-  } catch (error40) {
-    if (JSONParseError2.isInstance(error40) || TypeValidationError2.isInstance(error40)) {
-      throw error40;
+  } catch (error41) {
+    if (JSONParseError2.isInstance(error41) || TypeValidationError2.isInstance(error41)) {
+      throw error41;
     }
-    throw new JSONParseError2({ text: text2, cause: error40 });
+    throw new JSONParseError2({ text: text2, cause: error41 });
   }
 }
 async function safeParseJSON2({
@@ -88392,10 +88555,10 @@ async function safeParseJSON2({
       return { success: true, value, rawValue: value };
     }
     return await safeValidateTypes2({ value, schema });
-  } catch (error40) {
+  } catch (error41) {
     return {
       success: false,
-      error: JSONParseError2.isInstance(error40) ? error40 : new JSONParseError2({ text: text2, cause: error40 }),
+      error: JSONParseError2.isInstance(error41) ? error41 : new JSONParseError2({ text: text2, cause: error41 }),
       rawValue: void 0
     };
   }
@@ -88982,12 +89145,12 @@ var init_dist19 = __esm({
        * @param {unknown} error - The error to check.
        * @returns {boolean} True if the error is an AI SDK Error, false otherwise.
        */
-      static isInstance(error40) {
-        return _AISDKError22.hasMarker(error40, marker17);
+      static isInstance(error41) {
+        return _AISDKError22.hasMarker(error41, marker17);
       }
-      static hasMarker(error40, marker153) {
+      static hasMarker(error41, marker153) {
         const markerSymbol = Symbol.for(marker153);
-        return error40 != null && typeof error40 === "object" && markerSymbol in error40 && typeof error40[markerSymbol] === "boolean" && error40[markerSymbol] === true;
+        return error41 != null && typeof error41 === "object" && markerSymbol in error41 && typeof error41[markerSymbol] === "boolean" && error41[markerSymbol] === true;
       }
     };
     _a17 = symbol18;
@@ -89021,8 +89184,8 @@ var init_dist19 = __esm({
         this.isRetryable = isRetryable;
         this.data = data;
       }
-      static isInstance(error40) {
-        return AISDKError2.hasMarker(error40, marker24);
+      static isInstance(error41) {
+        return AISDKError2.hasMarker(error41, marker24);
       }
     };
     _a24 = symbol24;
@@ -89035,8 +89198,8 @@ var init_dist19 = __esm({
         super({ name: name24, message });
         this[_a34] = true;
       }
-      static isInstance(error40) {
-        return AISDKError2.hasMarker(error40, marker34);
+      static isInstance(error41) {
+        return AISDKError2.hasMarker(error41, marker34);
       }
     };
     _a34 = symbol34;
@@ -89053,8 +89216,8 @@ var init_dist19 = __esm({
         this[_a44] = true;
         this.argument = argument;
       }
-      static isInstance(error40) {
-        return AISDKError2.hasMarker(error40, marker44);
+      static isInstance(error41) {
+        return AISDKError2.hasMarker(error41, marker44);
       }
     };
     _a44 = symbol44;
@@ -89071,8 +89234,8 @@ var init_dist19 = __esm({
         this[_a54] = true;
         this.prompt = prompt;
       }
-      static isInstance(error40) {
-        return AISDKError2.hasMarker(error40, marker54);
+      static isInstance(error41) {
+        return AISDKError2.hasMarker(error41, marker54);
       }
     };
     _a54 = symbol54;
@@ -89088,8 +89251,8 @@ var init_dist19 = __esm({
         this[_a64] = true;
         this.data = data;
       }
-      static isInstance(error40) {
-        return AISDKError2.hasMarker(error40, marker64);
+      static isInstance(error41) {
+        return AISDKError2.hasMarker(error41, marker64);
       }
     };
     _a64 = symbol64;
@@ -89107,8 +89270,8 @@ Error message: ${getErrorMessage3(cause)}`,
         this[_a74] = true;
         this.text = text2;
       }
-      static isInstance(error40) {
-        return AISDKError2.hasMarker(error40, marker74);
+      static isInstance(error41) {
+        return AISDKError2.hasMarker(error41, marker74);
       }
     };
     _a74 = symbol74;
@@ -89121,8 +89284,8 @@ Error message: ${getErrorMessage3(cause)}`,
         super({ name: name73, message });
         this[_a83] = true;
       }
-      static isInstance(error40) {
-        return AISDKError2.hasMarker(error40, marker83);
+      static isInstance(error41) {
+        return AISDKError2.hasMarker(error41, marker83);
       }
     };
     _a83 = symbol83;
@@ -89141,8 +89304,8 @@ Error message: ${getErrorMessage3(cause)}`,
         super({ name: name93, message });
         this[_a103] = true;
       }
-      static isInstance(error40) {
-        return AISDKError2.hasMarker(error40, marker103);
+      static isInstance(error41) {
+        return AISDKError2.hasMarker(error41, marker103);
       }
     };
     _a103 = symbol103;
@@ -89168,8 +89331,8 @@ Error message: ${getErrorMessage3(cause)}`,
         this[_a133] = true;
         this.value = value;
       }
-      static isInstance(error40) {
-        return AISDKError2.hasMarker(error40, marker133);
+      static isInstance(error41) {
+        return AISDKError2.hasMarker(error41, marker133);
       }
       /**
        * Wraps an error into a TypeValidationError.
@@ -89202,8 +89365,8 @@ Error message: ${getErrorMessage3(cause)}`,
         this[_a143] = true;
         this.functionality = functionality;
       }
-      static isInstance(error40) {
-        return AISDKError2.hasMarker(error40, marker143);
+      static isInstance(error41) {
+        return AISDKError2.hasMarker(error41, marker143);
       }
     };
     _a143 = symbol143;
@@ -89221,8 +89384,8 @@ Error message: ${getErrorMessage3(cause)}`,
               onEvent: (event) => {
                 controller.enqueue(event);
               },
-              onError(error40) {
-                onError === "terminate" ? controller.error(error40) : typeof onError == "function" && onError(error40);
+              onError(error41) {
+                onError === "terminate" ? controller.error(error41) : typeof onError == "function" && onError(error41);
               },
               onRetry,
               onComment
@@ -89314,13 +89477,13 @@ Error message: ${getErrorMessage3(cause)}`,
               url: url3,
               requestBodyValues: body.values
             });
-          } catch (error40) {
-            if (isAbortError2(error40) || APICallError2.isInstance(error40)) {
-              throw error40;
+          } catch (error41) {
+            if (isAbortError2(error41) || APICallError2.isInstance(error41)) {
+              throw error41;
             }
             throw new APICallError2({
               message: "Failed to process error response",
-              cause: error40,
+              cause: error41,
               statusCode: response.status,
               url: url3,
               responseHeaders,
@@ -89335,23 +89498,23 @@ Error message: ${getErrorMessage3(cause)}`,
             url: url3,
             requestBodyValues: body.values
           });
-        } catch (error40) {
-          if (error40 instanceof Error) {
-            if (isAbortError2(error40) || APICallError2.isInstance(error40)) {
-              throw error40;
+        } catch (error41) {
+          if (error41 instanceof Error) {
+            if (isAbortError2(error41) || APICallError2.isInstance(error41)) {
+              throw error41;
             }
           }
           throw new APICallError2({
             message: "Failed to process successful response",
-            cause: error40,
+            cause: error41,
             statusCode: response.status,
             url: url3,
             responseHeaders,
             requestBodyValues: body.values
           });
         }
-      } catch (error40) {
-        throw handleFetchError2({ error: error40, url: url3, requestBodyValues: body.values });
+      } catch (error41) {
+        throw handleFetchError2({ error: error41, url: url3, requestBodyValues: body.values });
       }
     };
     createJsonErrorResponseHandler2 = ({
@@ -91244,6 +91407,7 @@ var init_UnifiedEngine = __esm({
     init_removeContentTags();
     init_tokenCount();
     init_generateCommitMessageFromGitDiff();
+    init_logger();
     GPT5_MODELS = [
       "gpt-5",
       "gpt-5.1",
@@ -91270,6 +91434,11 @@ var init_UnifiedEngine = __esm({
       }
       async generateCommitMessage(messages) {
         const requestTokens = messages.map((msg) => tokenCount(msg.content) + 4).reduce((a2, b2) => a2 + b2, 0);
+        debug("UnifiedEngine", "Token validation", {
+          requestTokens,
+          maxInput: this.config.maxTokensInput,
+          maxOutput: this.config.maxTokensOutput
+        });
         if (requestTokens > this.config.maxTokensInput - this.config.maxTokensOutput) {
           throw new Error(GenerateCommitMessageErrorEnum.tooMuchTokens);
         }
@@ -91278,6 +91447,13 @@ var init_UnifiedEngine = __esm({
           role: msg.role,
           content: msg.content
         }));
+        debug("UnifiedEngine", "Starting API call", {
+          provider: this.config.provider,
+          model: this.config.model,
+          messageCount: messages.length,
+          requestTokens
+        });
+        const startTime = Date.now();
         try {
           const result = await generateText({
             model,
@@ -91285,9 +91461,20 @@ var init_UnifiedEngine = __esm({
             maxTokens: this.config.maxTokensOutput,
             ...this.getGenerationOptions()
           });
+          const duration3 = Date.now() - startTime;
+          debug("UnifiedEngine", "API call complete", {
+            duration: `${duration3}ms`,
+            responseLength: result.text.length,
+            finishReason: result.finishReason
+          });
           return removeContentTags(result.text, "think");
-        } catch (error40) {
-          const err = error40;
+        } catch (error41) {
+          const duration3 = Date.now() - startTime;
+          const err = error41;
+          error("UnifiedEngine", "API call failed", {
+            duration: `${duration3}ms`,
+            error: err.message
+          });
           throw new Error(`${this.config.provider} error: ${err.message}`);
         }
       }
@@ -91396,10 +91583,16 @@ var init_UnifiedEngine = __esm({
 async function getEngine() {
   const config7 = getConfig();
   const provider = config7.OCO_AI_PROVIDER;
+  debug("engine", "Getting engine", {
+    provider,
+    model: config7.OCO_MODEL
+  });
   if (provider === "test" /* TEST */) {
+    debug("engine", "Using TestAi engine");
     return new TestAi(config7.OCO_TEST_MOCK_TYPE);
   }
   if (provider === "flowise" /* FLOWISE */) {
+    debug("engine", "Using FlowiseEngine");
     return new FlowiseEngine({
       model: config7.OCO_MODEL,
       maxTokensOutput: config7.OCO_TOKENS_MAX_OUTPUT,
@@ -91408,7 +91601,14 @@ async function getEngine() {
       apiKey: config7.OCO_API_KEY ?? ""
     });
   }
+  debug("engine", "Loading UnifiedEngine");
   const { UnifiedEngine: UnifiedEngine2 } = await Promise.resolve().then(() => (init_UnifiedEngine(), UnifiedEngine_exports));
+  debug("engine", "UnifiedEngine loaded", {
+    provider,
+    model: config7.OCO_MODEL,
+    hasApiKey: Boolean(config7.OCO_API_KEY),
+    hasBaseURL: Boolean(config7.OCO_API_URL)
+  });
   return new UnifiedEngine2({
     provider,
     model: config7.OCO_MODEL,
@@ -91425,6 +91625,7 @@ var init_engine = __esm({
     init_config();
     init_flowise();
     init_testAi();
+    init_logger();
   }
 });
 
@@ -91448,9 +91649,9 @@ var init_crypto = __esm({
         const hash = import_crypto5.default.createHash(algorithm);
         hash.update(content);
         return hash.digest("hex");
-      } catch (error40) {
-        console.error("Error while computing hash:", error40);
-        throw error40;
+      } catch (error41) {
+        console.error("Error while computing hash:", error41);
+        throw error41;
       }
     };
   }
@@ -91720,17 +91921,17 @@ ${STRUCTURE_OF_COMMIT}${breakingChangeHints}`
 });
 
 // src/modules/commitlint/pwd-commitlint.ts
-var import_promises, import_path2, findModulePath, getCommitLintModuleType, getCommitLintPWDConfig;
+var import_promises, import_path3, findModulePath, getCommitLintModuleType, getCommitLintPWDConfig;
 var init_pwd_commitlint = __esm({
   "src/modules/commitlint/pwd-commitlint.ts"() {
     "use strict";
     import_promises = __toESM(require("fs/promises"), 1);
-    import_path2 = __toESM(require("path"), 1);
+    import_path3 = __toESM(require("path"), 1);
     findModulePath = (moduleName) => {
       const searchPaths = [
-        import_path2.default.join("node_modules", moduleName),
-        import_path2.default.join("node_modules", ".pnpm"),
-        import_path2.default.resolve(__dirname, "../..")
+        import_path3.default.join("node_modules", moduleName),
+        import_path3.default.join("node_modules", ".pnpm"),
+        import_path3.default.resolve(__dirname, "../..")
       ];
       for (const basePath of searchPaths) {
         try {
@@ -92176,7 +92377,7 @@ var init_breakingChange = __esm({
 });
 
 // src/prompts.ts
-var config5, translation3, IDENTITY, GITMOJI_HELP, FULL_GITMOJI_SPEC, CONVENTIONAL_COMMIT_KEYWORDS, getCommitConvention, getDescriptionInstruction, getOneLineCommitInstruction, getScopeInstruction, BREAKING_CHANGE_INSTRUCTION2, getBreakingChangeInstruction, userInputCodeContext, INIT_MAIN_PROMPT2, INIT_DIFF_PROMPT, COMMIT_TYPES, generateCommitString, getConsistencyContent, INIT_CONSISTENCY_PROMPT, getMainCommitPrompt;
+var config5, translation3, IDENTITY, GITMOJI_HELP, FULL_GITMOJI_SPEC, CONVENTIONAL_COMMIT_KEYWORDS, COMMIT_FORMAT_INSTRUCTION, getCommitConvention, getDescriptionInstruction, getOneLineCommitInstruction, getScopeInstruction, BREAKING_CHANGE_INSTRUCTION2, getBreakingChangeInstruction, userInputCodeContext, INIT_MAIN_PROMPT2, INIT_DIFF_PROMPT, COMMIT_TYPES, generateCommitString, getConsistencyContent, INIT_CONSISTENCY_PROMPT, getMainCommitPrompt;
 var init_prompts2 = __esm({
   "src/prompts.ts"() {
     "use strict";
@@ -92267,6 +92468,30 @@ var init_prompts2 = __esm({
 \u{1F9F5}, Add or update code related to multithreading or concurrency; 
 \u{1F9BA}, Add or update code related to validation.`;
     CONVENTIONAL_COMMIT_KEYWORDS = "Do not preface the commit with anything, except for the conventional commit keywords: fix, feat, build, chore, ci, docs, style, refactor, perf, test.";
+    COMMIT_FORMAT_INSTRUCTION = `
+IMPORTANT: Output exactly ONE commit message. Follow this format strictly:
+
+<type>(<optional scope>): <subject line>
+
+<optional body with details>
+
+Rules:
+- The subject line must start with ONLY ONE type prefix (feat, fix, etc.)
+- NEVER output multiple type prefixes (e.g., "feat: ... feat: ... refactor: ..." is WRONG)
+- If there are multiple changes, use the most significant type for the subject
+- List other changes as bullet points in the body using "- " prefix
+- The body should be comprehensive - capture ALL significant changes
+- Each bullet point should be a complete thought, not a commit-style prefix
+
+Example for multiple changes:
+feat: add user authentication and improve performance
+
+- Add JWT-based authentication system with refresh tokens
+- Implement rate limiting middleware for API endpoints  
+- Update database schema to support user sessions
+- Refactor connection pooling for better performance
+- Fix memory leak in WebSocket handler
+`;
     getCommitConvention = (fullGitMojiSpec) => config5.OCO_EMOJI ? fullGitMojiSpec ? FULL_GITMOJI_SPEC : GITMOJI_HELP : CONVENTIONAL_COMMIT_KEYWORDS;
     getDescriptionInstruction = () => config5.OCO_DESCRIPTION ? `Add a short description of WHY the changes are done after the commit message. Don't start it with "This commit", just describe the changes.` : "Don't add any descriptions to the commit, only commit message.";
     getOneLineCommitInstruction = () => config5.OCO_ONE_LINE_COMMIT ? "Craft a concise, single sentence, commit message that encapsulates all changes made, with an emphasis on the primary updates. If the modifications share a common theme or scope, mention it succinctly; otherwise, leave the scope out to maintain focus. The goal is to provide a clear and unified overview of the changes in one single message." : "";
@@ -92315,6 +92540,7 @@ Consider this context when generating the commit message, incorporating relevant
         return `${missionStatement}
 ${diffInstruction}
 ${conventionGuidelines}
+${COMMIT_FORMAT_INSTRUCTION}
 ${descriptionGuideline}
 ${oneLineCommitGuideline}
 ${scopeInstruction}
@@ -92498,6 +92724,7 @@ var init_generateCommitMessageFromGitDiff = __esm({
     init_prompts2();
     init_breakingChange();
     init_engine();
+    init_logger();
     init_mergeDiffs();
     init_tokenCount();
     config6 = getConfig();
@@ -92524,8 +92751,18 @@ var init_generateCommitMessageFromGitDiff = __esm({
     };
     ADJUSTMENT_FACTOR = 20;
     generateCommitMessageByDiff = async (diff, fullGitMojiSpec = false, context2 = "") => {
+      const diffTokens = tokenCount(diff);
+      debug("generateCommitMessage", "Starting", {
+        diffLength: diff.length,
+        diffTokens,
+        hasContext: context2.length > 0
+      });
       try {
         const breakingChangeHints = config6.OCO_BREAKING_CHANGE ? analyzeBreakingChanges(diff) : [];
+        debug("generateCommitMessage", "Breaking change analysis", {
+          enabled: config6.OCO_BREAKING_CHANGE,
+          hintsFound: breakingChangeHints.length
+        });
         const INIT_MESSAGES_PROMPT = await getMainCommitPrompt(
           fullGitMojiSpec,
           context2,
@@ -92535,13 +92772,25 @@ var init_generateCommitMessageFromGitDiff = __esm({
           (msg) => tokenCount(msg.content) + 4
         ).reduce((a2, b2) => a2 + b2, 0);
         const MAX_REQUEST_TOKENS = MAX_TOKENS_INPUT - ADJUSTMENT_FACTOR - INIT_MESSAGES_PROMPT_LENGTH - MAX_TOKENS_OUTPUT;
+        debug("generateCommitMessage", "Token calculation", {
+          maxInput: MAX_TOKENS_INPUT,
+          maxOutput: MAX_TOKENS_OUTPUT,
+          promptTokens: INIT_MESSAGES_PROMPT_LENGTH,
+          maxRequestTokens: MAX_REQUEST_TOKENS,
+          diffTokens,
+          willSplit: diffTokens >= MAX_REQUEST_TOKENS
+        });
         if (tokenCount(diff) >= MAX_REQUEST_TOKENS) {
+          debug("generateCommitMessage", "Splitting diff into multiple requests");
           const commitMessagePromises = await getCommitMsgsPromisesFromFileDiffs(
             diff,
             MAX_REQUEST_TOKENS,
             fullGitMojiSpec,
             breakingChangeHints
           );
+          debug("generateCommitMessage", "Split complete", {
+            numRequests: commitMessagePromises.length
+          });
           const commitMessages = [];
           for (const promise2 of commitMessagePromises) {
             commitMessages.push(await promise2);
@@ -92555,13 +92804,19 @@ var init_generateCommitMessageFromGitDiff = __esm({
           context2,
           breakingChangeHints
         );
+        debug("generateCommitMessage", "Calling engine", {
+          messageCount: messages.length
+        });
         const engine = await getEngine();
         const commitMessage = await engine.generateCommitMessage(messages);
         if (!commitMessage)
           throw new Error(GenerateCommitMessageErrorEnum.emptyMessage);
+        debug("generateCommitMessage", "Success", {
+          messageLength: commitMessage.length
+        });
         return commitMessage;
-      } catch (error40) {
-        throw error40;
+      } catch (error41) {
+        throw error41;
       }
     };
     getCommitMsgsPromisesFromFileDiffs = async (diff, maxDiffLength, fullGitMojiSpec, breakingChangeHints = []) => {
@@ -92600,7 +92855,7 @@ var import_core9 = __toESM(require_core(), 1);
 var import_exec = __toESM(require_exec(), 1);
 var import_github = __toESM(require_github(), 1);
 init_dist2();
-var import_fs2 = require("fs");
+var import_fs3 = require("fs");
 init_generateCommitMessageFromGitDiff();
 
 // src/utils/randomIntFromInterval.ts
@@ -92657,8 +92912,8 @@ async function improveMessagesInChunks(diffsAndSHAs) {
         `Improved ${chunkOfPromises.length} messages. Sleeping for ${sleepFor}`
       );
       await sleep(sleepFor);
-    } catch (error40) {
-      ce(error40);
+    } catch (error41) {
+      ce(error41);
       const sleepFor = 6e4 + 1e3 * randomIntFromInterval(1, 5);
       ce(`Retrying after sleeping for ${sleepFor}`);
       await sleep(sleepFor);
@@ -92669,9 +92924,9 @@ async function improveMessagesInChunks(diffsAndSHAs) {
 }
 var getDiffsBySHAs = async (SHAs) => {
   const diffPromises = SHAs.map((sha) => getCommitDiff(sha));
-  const diffs = await Promise.all(diffPromises).catch((error40) => {
-    ce(`Error in Promise.all(getCommitDiffs(SHAs)): ${error40}.`);
-    throw error40;
+  const diffs = await Promise.all(diffPromises).catch((error41) => {
+    ce(`Error in Promise.all(getCommitDiffs(SHAs)): ${error41}.`);
+    throw error41;
   });
   return diffs;
 };
@@ -92698,12 +92953,12 @@ async function improveCommitMessages(commitsToImprove) {
     console.log("No changes in commit messages detected, skipping rebase");
     return;
   }
-  const createCommitMessageFile = (message, index) => (0, import_fs2.writeFileSync)(`./commit-${index}.txt`, message);
+  const createCommitMessageFile = (message, index) => (0, import_fs3.writeFileSync)(`./commit-${index}.txt`, message);
   improvedMessagesWithSHAs.forEach(
     ({ msg }, i2) => createCommitMessageFile(msg, i2)
   );
-  (0, import_fs2.writeFileSync)(`./count.txt`, "0");
-  (0, import_fs2.writeFileSync)(
+  (0, import_fs3.writeFileSync)(`./count.txt`, "0");
+  (0, import_fs3.writeFileSync)(
     "./rebase-exec.sh",
     `#!/bin/bash
     count=$(cat count.txt)
@@ -92722,10 +92977,10 @@ async function improveCommitMessages(commitsToImprove) {
       }
     }
   );
-  const deleteCommitMessageFile = (index) => (0, import_fs2.unlinkSync)(`./commit-${index}.txt`);
+  const deleteCommitMessageFile = (index) => (0, import_fs3.unlinkSync)(`./commit-${index}.txt`);
   commitsToImprove.forEach((_commit, i2) => deleteCommitMessageFile(i2));
-  (0, import_fs2.unlinkSync)("./count.txt");
-  (0, import_fs2.unlinkSync)("./rebase-exec.sh");
+  (0, import_fs3.unlinkSync)("./count.txt");
+  (0, import_fs3.unlinkSync)("./rebase-exec.sh");
   ce("Force pushing non-interactively rebased commits into remote.");
   await import_exec.default.exec("git", ["status"]);
   await import_exec.default.exec("git", ["push", `--force`]);
@@ -92750,8 +93005,8 @@ async function run() {
         `OpenCommit was called on ${import_github.default.context.payload.action}. OpenCommit is supposed to be used on "push" action.`
       );
     }
-  } catch (error40) {
-    const err = error40?.message || error40;
+  } catch (error41) {
+    const err = error41?.message || error41;
     import_core9.default.setFailed(err);
   }
 }

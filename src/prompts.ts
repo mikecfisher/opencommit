@@ -102,6 +102,31 @@ const FULL_GITMOJI_SPEC = `${GITMOJI_HELP}
 const CONVENTIONAL_COMMIT_KEYWORDS =
   'Do not preface the commit with anything, except for the conventional commit keywords: fix, feat, build, chore, ci, docs, style, refactor, perf, test.';
 
+const COMMIT_FORMAT_INSTRUCTION = `
+IMPORTANT: Output exactly ONE commit message. Follow this format strictly:
+
+<type>(<optional scope>): <subject line>
+
+<optional body with details>
+
+Rules:
+- The subject line must start with ONLY ONE type prefix (feat, fix, etc.)
+- NEVER output multiple type prefixes (e.g., "feat: ... feat: ... refactor: ..." is WRONG)
+- If there are multiple changes, use the most significant type for the subject
+- List other changes as bullet points in the body using "- " prefix
+- The body should be comprehensive - capture ALL significant changes
+- Each bullet point should be a complete thought, not a commit-style prefix
+
+Example for multiple changes:
+feat: add user authentication and improve performance
+
+- Add JWT-based authentication system with refresh tokens
+- Implement rate limiting middleware for API endpoints  
+- Update database schema to support user sessions
+- Refactor connection pooling for better performance
+- Fix memory leak in WebSocket handler
+`;
+
 const getCommitConvention = (fullGitMojiSpec: boolean) =>
   config.OCO_EMOJI
     ? fullGitMojiSpec
@@ -184,7 +209,7 @@ const INIT_MAIN_PROMPT = (
     const generalGuidelines = `Use the present tense. Lines must not be longer than 74 characters. Use ${language} for the commit message.`;
     const userInputContext = userInputCodeContext(context);
 
-    return `${missionStatement}\n${diffInstruction}\n${conventionGuidelines}\n${descriptionGuideline}\n${oneLineCommitGuideline}\n${scopeInstruction}\n${breakingChangeGuideline}\n${generalGuidelines}\n${userInputContext}${breakingChangeHints}`;
+    return `${missionStatement}\n${diffInstruction}\n${conventionGuidelines}\n${COMMIT_FORMAT_INSTRUCTION}\n${descriptionGuideline}\n${oneLineCommitGuideline}\n${scopeInstruction}\n${breakingChangeGuideline}\n${generalGuidelines}\n${userInputContext}${breakingChangeHints}`;
   })()
 });
 
