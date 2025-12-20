@@ -920,6 +920,84 @@ export type ConfigType = {
 
 export const defaultConfigPath = pathJoin(homedir(), '.opencommit');
 export const defaultEnvPath = pathResolve(process.cwd(), '.env');
+export const defaultRepoConfigPath = pathResolve(process.cwd(), '.opencommit.jsonc');
+
+// Mapping from friendly JSON keys to internal OCO_ keys
+const REPO_CONFIG_KEY_MAP: Record<string, string> = {
+  model: 'OCO_MODEL',
+  provider: 'OCO_AI_PROVIDER',
+  emoji: 'OCO_EMOJI',
+  description: 'OCO_DESCRIPTION',
+  language: 'OCO_LANGUAGE',
+  oneLineCommit: 'OCO_ONE_LINE_COMMIT',
+  omitScope: 'OCO_OMIT_SCOPE',
+  breakingChange: 'OCO_BREAKING_CHANGE',
+  why: 'OCO_WHY',
+  promptModule: 'OCO_PROMPT_MODULE',
+  maxTokensInput: 'OCO_TOKENS_MAX_INPUT',
+  maxTokensOutput: 'OCO_TOKENS_MAX_OUTPUT',
+  reasoningEffort: 'OCO_REASONING_EFFORT',
+  gitPush: 'OCO_GITPUSH'
+};
+
+// Keys blocked from repo config for security (could be accidentally committed)
+const BLOCKED_REPO_CONFIG_KEYS = ['OCO_API_KEY', 'OCO_API_URL', 'OCO_API_CUSTOM_HEADERS'];
+
+/**
+ * Parse JSONC (JSON with comments) without external dependencies
+ */
+const parseJsonc = (content: string): Record<string, unknown> => {
+  // Strip single-line comments (// ...) and multi-line comments (/* ... */)
+  const stripped = content
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '');
+  return JSON.parse(stripped);
+};
+
+export interface CustomPromptConfig {
+  instructions?: string[];
+  systemPromptOverride?: string;
+}
+
+/**
+ * Read and parse the per-repo .opencommit.jsonc config file
+ */
+export const getRepoConfig = (
+  repoConfigPath: string = defaultRepoConfigPath
+): { config: Partial<ConfigType>; customPrompt?: CustomPromptConfig } => {
+  if (!existsSync(repoConfigPath)) {
+    return { config: {} };
+  }
+
+  try {
+    const content = readFileSync(repoConfigPath, 'utf8');
+    const parsed = parseJsonc(content);
+    const mappedConfig: Partial<ConfigType> = {};
+    let customPrompt: CustomPromptConfig | undefined;
+
+    for (const [key, value] of Object.entries(parsed)) {
+      if (key === 'customPrompt') {
+        customPrompt = value as CustomPromptConfig;
+        continue;
+      }
+
+      // Map friendly key to OCO_ key
+      const ocoKey = REPO_CONFIG_KEY_MAP[key] || key;
+
+      // Skip blocked keys for security
+      if (BLOCKED_REPO_CONFIG_KEYS.includes(ocoKey)) {
+        continue;
+      }
+
+      mappedConfig[ocoKey as keyof ConfigType] = value as any;
+    }
+
+    return { config: mappedConfig, customPrompt };
+  } catch (error) {
+    // Silently ignore parse errors - just return empty config
+    return { config: {} };
+  }
+};
 
 const assertConfigsAreValid = (config: Record<string, any>) => {
   for (const [key, value] of Object.entries(config)) {
@@ -1057,6 +1135,7 @@ const mergeConfigs = (main: Partial<ConfigType>, fallback: ConfigType) => {
 interface GetConfigOptions {
   globalPath?: string;
   envPath?: string;
+  repoConfigPath?: string;
   setDefaultValues?: boolean;
 }
 
@@ -1079,18 +1158,36 @@ const cleanUndefinedValues = (config: ConfigType) => {
   );
 };
 
+// Cache for custom prompt config (loaded once per process)
+let cachedCustomPrompt: CustomPromptConfig | undefined;
+
 export const getConfig = ({
   envPath = defaultEnvPath,
-  globalPath = defaultConfigPath
+  globalPath = defaultConfigPath,
+  repoConfigPath = defaultRepoConfigPath
 }: GetConfigOptions = {}): ConfigType => {
   const envConfig = getEnvConfig(envPath);
   const globalConfig = getGlobalConfig(globalPath);
+  const { config: repoConfig, customPrompt } = getRepoConfig(repoConfigPath);
 
-  const config = mergeConfigs(envConfig, globalConfig);
+  // Cache the custom prompt for later retrieval
+  cachedCustomPrompt = customPrompt;
+
+  // Merge priority: env > repo > global
+  const withRepoConfig = mergeConfigs(repoConfig, globalConfig);
+  const config = mergeConfigs(envConfig, withRepoConfig);
 
   const cleanConfig = cleanUndefinedValues(config);
 
   return cleanConfig as ConfigType;
+};
+
+/**
+ * Get the custom prompt config from the repo config file.
+ * Must call getConfig() first to populate the cache.
+ */
+export const getCustomPromptConfig = (): CustomPromptConfig | undefined => {
+  return cachedCustomPrompt;
 };
 
 export const setConfig = (

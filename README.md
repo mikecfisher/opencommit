@@ -18,6 +18,131 @@
 
 All the commits in this repo are authored by OpenCommit — look at [the commits](https://github.com/di-sukharev/opencommit/commit/eae7618d575ee8d2e9fff5de56da79d40c4bc5fc) to see how OpenCommit works. Emojis and long commit descriptions are configurable, basically everything is.
 
+---
+
+## Fork Enhancements
+
+This fork includes several improvements over the upstream OpenCommit:
+
+### Interactive Setup Wizard
+
+Run `oco setup` for a guided configuration experience:
+
+```sh
+oco setup
+```
+
+The wizard walks you through selecting your AI provider, model, and preferences.
+
+### Per-Repo Configuration (`.opencommit.jsonc`)
+
+Create a `.opencommit.jsonc` file in your repo root for project-specific settings with friendly JSON keys:
+
+```jsonc
+// .opencommit.jsonc
+{
+  // Model settings
+  "model": "gpt-4o",
+  "provider": "openai",
+
+  // Commit formatting
+  "emoji": true,
+  "description": true,
+  "language": "en",
+  "oneLineCommit": false,
+  "omitScope": false,
+
+  // Features
+  "breakingChange": true,
+
+  // Custom prompt instructions (additive)
+  "customPrompt": {
+    "instructions": [
+      "This is a monorepo with packages in /packages/*",
+      "Always include the package name in the scope",
+      "Reference Jira tickets as [PROJ-XXX] in the body"
+    ]
+  }
+}
+```
+
+**Config priority** (lowest to highest): Global `~/.opencommit` → Per-repo `.opencommit.jsonc` → Local `.env`
+
+**Blocked keys** (for security): API keys and URLs are ignored in `.opencommit.jsonc` to prevent accidental commits.
+
+| JSON Key | Description |
+|----------|-------------|
+| `model` | AI model (gpt-4o, claude-3-5-sonnet, etc.) |
+| `provider` | AI provider (openai, anthropic, gemini, ollama, etc.) |
+| `emoji` | Prefix with GitMoji |
+| `description` | Add description after commit |
+| `language` | Commit message language |
+| `oneLineCommit` | Single-line commits only |
+| `omitScope` | Skip scope in commit format |
+| `breakingChange` | Detect/flag breaking changes |
+| `why` | Explain why changes were made |
+| `promptModule` | `conventional-commit` or `@commitlint` |
+| `maxTokensInput` | Max input tokens |
+| `maxTokensOutput` | Max output tokens |
+| `reasoningEffort` | Reasoning level (none/low/medium/high) |
+
+### Breaking Change Detection
+
+Automatically detects breaking changes in your diffs:
+- Removed or renamed exports
+- Changed function signatures
+- Removed API endpoints
+- Changed default values
+
+When detected, commits are formatted with `!` notation and include a `BREAKING CHANGE:` footer:
+
+```
+feat(api)!: remove deprecated endpoints
+
+- Remove /v1/users endpoint
+- Update authentication flow
+
+BREAKING CHANGE: The /v1/users endpoint has been removed. Migrate to /v2/users.
+```
+
+Enable/disable with:
+```sh
+oco config set OCO_BREAKING_CHANGE=true
+```
+
+### Debug Logging
+
+Use the `--debug` flag to output detailed logs:
+
+```sh
+oco --debug
+```
+
+Logs are written to `~/.opencommit/debug.log` for troubleshooting.
+
+### Reasoning Model Support
+
+For GPT-5 and O-series models (o1, o3, o4), configure reasoning effort:
+
+```sh
+oco config set OCO_REASONING_EFFORT=medium  # none, low, medium, high
+```
+
+Higher effort = better quality but slower and more expensive.
+
+### Expanded Model Support
+
+- **OpenAI**: GPT-4o, GPT-4, o1, o3, o3-mini, o4-mini, and more
+- **Anthropic**: Claude 3.5 Sonnet, Claude 3 Opus/Sonnet/Haiku
+- **Google**: Gemini 2.5 Flash/Pro, Gemini 3 (preview), Gemini 2.0/1.5
+- **Others**: Mistral, Groq, DeepSeek, Ollama, OpenRouter, AI/ML API
+
+### Increased Default Token Limit
+
+Default input token limit increased from 4,096 to 32,000 to handle larger diffs without splitting.
+
+---
+
 ## Setup OpenCommit as a CLI tool
 
 You can use OpenCommit by simply running it via the CLI like this `oco`. 2 seconds and your staged changes are committed with a meaningful message.
@@ -118,26 +243,27 @@ oco --yes
 
 ### Local per repo configuration
 
-Create a `.env` file and add OpenCommit config variables there like this:
+**Option 1: `.opencommit.jsonc`** (recommended - see [Per-Repo Configuration](#per-repo-configuration-opencommitjsonc) above)
+
+**Option 2: `.env` file** with OpenCommit config variables:
 
 ```env
-...
-OCO_AI_PROVIDER=<openai (default), anthropic, azure, ollama, gemini, flowise, deepseek, aimlapi>
-OCO_API_KEY=<your OpenAI API token> // or other LLM provider API token
-OCO_API_URL=<may be used to set proxy path to OpenAI api>
-OCO_API_CUSTOM_HEADERS=<JSON string of custom HTTP headers to include in API requests>
-OCO_TOKENS_MAX_INPUT=<max model token limit (default: 4096)>
+OCO_AI_PROVIDER=<openai (default), anthropic, azure, ollama, gemini, flowise, deepseek, aimlapi, openrouter, mistral, groq>
+OCO_API_KEY=<your API key>
+OCO_API_URL=<custom API endpoint URL>
+OCO_TOKENS_MAX_INPUT=<max model token limit (default: 32000)>
 OCO_TOKENS_MAX_OUTPUT=<max response tokens (default: 500)>
-OCO_DESCRIPTION=<postface a message with ~3 sentences description of the changes>
+OCO_DESCRIPTION=<boolean, add description after commit message>
 OCO_EMOJI=<boolean, add GitMoji>
-OCO_MODEL=<either 'gpt-4o-mini' (default), 'gpt-4o', 'gpt-4', 'gpt-4-turbo', 'gpt-3.5-turbo', 'gpt-3.5-turbo-0125', 'gpt-4-1106-preview', 'gpt-4-turbo-preview' or 'gpt-4-0125-preview' or any Anthropic or Ollama model or any string basically, but it should be a valid model name>
-OCO_LANGUAGE=<locale, scroll to the bottom to see options>
-OCO_MESSAGE_TEMPLATE_PLACEHOLDER=<message template placeholder, default: '$msg'>
-OCO_PROMPT_MODULE=<either conventional-commit or @commitlint, default: conventional-commit>
-OCO_ONE_LINE_COMMIT=<one line commit message, default: false>
+OCO_MODEL=<model name, e.g. gpt-4o, claude-3-5-sonnet, gemini-2.5-flash>
+OCO_LANGUAGE=<locale, e.g. en, de, fr>
+OCO_PROMPT_MODULE=<conventional-commit or @commitlint>
+OCO_ONE_LINE_COMMIT=<boolean, single line commits>
+OCO_BREAKING_CHANGE=<boolean, detect breaking changes>
+OCO_REASONING_EFFORT=<none, low, medium, high - for reasoning models>
 ```
 
-Global configs are same as local configs, but they are stored in the global `~/.opencommit` config file and set with `oco config set` command, e.g. `oco config set OCO_MODEL=gpt-4o`.
+Global configs are stored in `~/.opencommit` and set with `oco config set`, e.g. `oco config set OCO_MODEL=gpt-4o`.
 
 ### Global config for all repos
 

@@ -151,7 +151,8 @@ ${chalk.grey('——————————————————')}`
 
       if (remotes.length === 1) {
         const isPushConfirmedByUser = await confirm({
-          message: 'Do you want to run `git push`?'
+          message: 'Do you want to run `git push`?',
+          initialValue: false
         });
 
         if (isCancel(isPushConfirmedByUser)) process.exit(1);

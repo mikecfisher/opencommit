@@ -3894,7 +3894,7 @@ ${key}:`));
     )
   );
 }
-var dotenv, import_fs, import_ini, import_os, import_path, CONFIG_KEYS, MODEL_LIST, getDefaultModel, validateConfig, configValidators, OCO_AI_PROVIDER_ENUM, defaultConfigPath, defaultEnvPath, OCO_PROMPT_MODULE_ENUM, DEFAULT_CONFIG, initGlobalConfig, parseConfigVarValue, getEnvConfig, setGlobalConfig, getIsGlobalConfigFileExist, getGlobalConfig, mergeConfigs, cleanUndefinedValues, getConfig, setConfig, configCommand;
+var dotenv, import_fs, import_ini, import_os, import_path, CONFIG_KEYS, MODEL_LIST, getDefaultModel, validateConfig, configValidators, OCO_AI_PROVIDER_ENUM, defaultConfigPath, defaultEnvPath, defaultRepoConfigPath, REPO_CONFIG_KEY_MAP, BLOCKED_REPO_CONFIG_KEYS, parseJsonc, getRepoConfig, OCO_PROMPT_MODULE_ENUM, DEFAULT_CONFIG, initGlobalConfig, parseConfigVarValue, getEnvConfig, setGlobalConfig, getIsGlobalConfigFileExist, getGlobalConfig, mergeConfigs, cleanUndefinedValues, cachedCustomPrompt, getConfig, getCustomPromptConfig, setConfig, configCommand;
 var init_config = __esm({
   "src/commands/config.ts"() {
     "use strict";
@@ -4744,6 +4744,53 @@ var init_config = __esm({
     })(OCO_AI_PROVIDER_ENUM || {});
     defaultConfigPath = (0, import_path.join)((0, import_os.homedir)(), ".opencommit");
     defaultEnvPath = (0, import_path.resolve)(process.cwd(), ".env");
+    defaultRepoConfigPath = (0, import_path.resolve)(process.cwd(), ".opencommit.jsonc");
+    REPO_CONFIG_KEY_MAP = {
+      model: "OCO_MODEL",
+      provider: "OCO_AI_PROVIDER",
+      emoji: "OCO_EMOJI",
+      description: "OCO_DESCRIPTION",
+      language: "OCO_LANGUAGE",
+      oneLineCommit: "OCO_ONE_LINE_COMMIT",
+      omitScope: "OCO_OMIT_SCOPE",
+      breakingChange: "OCO_BREAKING_CHANGE",
+      why: "OCO_WHY",
+      promptModule: "OCO_PROMPT_MODULE",
+      maxTokensInput: "OCO_TOKENS_MAX_INPUT",
+      maxTokensOutput: "OCO_TOKENS_MAX_OUTPUT",
+      reasoningEffort: "OCO_REASONING_EFFORT",
+      gitPush: "OCO_GITPUSH"
+    };
+    BLOCKED_REPO_CONFIG_KEYS = ["OCO_API_KEY", "OCO_API_URL", "OCO_API_CUSTOM_HEADERS"];
+    parseJsonc = (content) => {
+      const stripped = content.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+      return JSON.parse(stripped);
+    };
+    getRepoConfig = (repoConfigPath = defaultRepoConfigPath) => {
+      if (!(0, import_fs.existsSync)(repoConfigPath)) {
+        return { config: {} };
+      }
+      try {
+        const content = (0, import_fs.readFileSync)(repoConfigPath, "utf8");
+        const parsed = parseJsonc(content);
+        const mappedConfig = {};
+        let customPrompt;
+        for (const [key, value] of Object.entries(parsed)) {
+          if (key === "customPrompt") {
+            customPrompt = value;
+            continue;
+          }
+          const ocoKey = REPO_CONFIG_KEY_MAP[key] || key;
+          if (BLOCKED_REPO_CONFIG_KEYS.includes(ocoKey)) {
+            continue;
+          }
+          mappedConfig[ocoKey] = value;
+        }
+        return { config: mappedConfig, customPrompt };
+      } catch (error41) {
+        return { config: {} };
+      }
+    };
     OCO_PROMPT_MODULE_ENUM = /* @__PURE__ */ ((OCO_PROMPT_MODULE_ENUM2) => {
       OCO_PROMPT_MODULE_ENUM2["CONVENTIONAL_COMMIT"] = "conventional-commit";
       OCO_PROMPT_MODULE_ENUM2["COMMITLINT"] = "@commitlint";
@@ -4848,13 +4895,20 @@ var init_config = __esm({
     };
     getConfig = ({
       envPath = defaultEnvPath,
-      globalPath = defaultConfigPath
+      globalPath = defaultConfigPath,
+      repoConfigPath = defaultRepoConfigPath
     } = {}) => {
       const envConfig = getEnvConfig(envPath);
       const globalConfig2 = getGlobalConfig(globalPath);
-      const config8 = mergeConfigs(envConfig, globalConfig2);
+      const { config: repoConfig, customPrompt } = getRepoConfig(repoConfigPath);
+      cachedCustomPrompt = customPrompt;
+      const withRepoConfig = mergeConfigs(repoConfig, globalConfig2);
+      const config8 = mergeConfigs(envConfig, withRepoConfig);
       const cleanConfig = cleanUndefinedValues(config8);
       return cleanConfig;
+    };
+    getCustomPromptConfig = () => {
+      return cachedCustomPrompt;
     };
     setConfig = (keyValues, globalConfigPath = defaultConfigPath) => {
       const config8 = getConfig({
@@ -70198,7 +70252,7 @@ var init_breakingChange = __esm({
 });
 
 // src/prompts.ts
-var config5, translation3, IDENTITY, GITMOJI_HELP, FULL_GITMOJI_SPEC, CONVENTIONAL_COMMIT_KEYWORDS, COMMIT_FORMAT_INSTRUCTION, getCommitConvention, getDescriptionInstruction, getOneLineCommitInstruction, getScopeInstruction, BREAKING_CHANGE_INSTRUCTION2, getBreakingChangeInstruction, userInputCodeContext, INIT_MAIN_PROMPT2, INIT_DIFF_PROMPT, COMMIT_TYPES, generateCommitString, getConsistencyContent, INIT_CONSISTENCY_PROMPT, getMainCommitPrompt;
+var config5, translation3, IDENTITY, GITMOJI_HELP, FULL_GITMOJI_SPEC, CONVENTIONAL_COMMIT_KEYWORDS, COMMIT_FORMAT_INSTRUCTION, getCommitConvention, getDescriptionInstruction, getOneLineCommitInstruction, getScopeInstruction, BREAKING_CHANGE_INSTRUCTION2, getBreakingChangeInstruction, userInputCodeContext, formatCustomInstructions, INIT_MAIN_PROMPT2, INIT_DIFF_PROMPT, COMMIT_TYPES, generateCommitString, getConsistencyContent, INIT_CONSISTENCY_PROMPT, getMainCommitPrompt;
 var init_prompts2 = __esm({
   "src/prompts.ts"() {
     "use strict";
@@ -70345,9 +70399,19 @@ Consider this context when generating the commit message, incorporating relevant
       }
       return "";
     };
-    INIT_MAIN_PROMPT2 = (language, fullGitMojiSpec, context, breakingChangeHints = "") => ({
+    formatCustomInstructions = (customPrompt) => {
+      if (!customPrompt?.instructions?.length) return "";
+      return `
+
+Project-specific instructions:
+${customPrompt.instructions.map((i2) => `- ${i2}`).join("\n")}`;
+    };
+    INIT_MAIN_PROMPT2 = (language, fullGitMojiSpec, context, breakingChangeHints = "", customPrompt) => ({
       role: "system",
       content: (() => {
+        if (customPrompt?.systemPromptOverride) {
+          return customPrompt.systemPromptOverride + formatCustomInstructions(customPrompt);
+        }
         const commitConvention = fullGitMojiSpec ? "GitMoji specification" : "Conventional Commit Convention";
         const missionStatement = `${IDENTITY} Your mission is to create clean and comprehensive commit messages as per the ${commitConvention} and explain WHAT were the changes and mainly WHY the changes were done.`;
         const diffInstruction = "I'll send you an output of 'git diff --staged' command, and you are to convert it into a commit message.";
@@ -70358,6 +70422,7 @@ Consider this context when generating the commit message, incorporating relevant
         const breakingChangeGuideline = getBreakingChangeInstruction();
         const generalGuidelines = `Use the present tense. Lines must not be longer than 74 characters. Use ${language} for the commit message.`;
         const userInputContext = userInputCodeContext(context);
+        const customInstructions = formatCustomInstructions(customPrompt);
         return `${missionStatement}
 ${diffInstruction}
 ${conventionGuidelines}
@@ -70367,7 +70432,7 @@ ${oneLineCommitGuideline}
 ${scopeInstruction}
 ${breakingChangeGuideline}
 ${generalGuidelines}
-${userInputContext}${breakingChangeHints}`;
+${userInputContext}${breakingChangeHints}${customInstructions}`;
       })()
     });
     INIT_DIFF_PROMPT = {
@@ -70419,6 +70484,7 @@ ${userInputContext}${breakingChangeHints}`;
     });
     getMainCommitPrompt = async (fullGitMojiSpec, context, breakingChangeHints = []) => {
       const hintsText = config5.OCO_BREAKING_CHANGE ? formatBreakingChangeHints(breakingChangeHints) : "";
+      const customPrompt = getCustomPromptConfig();
       switch (config5.OCO_PROMPT_MODULE) {
         case "@commitlint":
           if (!await commitlintLLMConfigExists()) {
@@ -70445,7 +70511,8 @@ ${userInputContext}${breakingChangeHints}`;
               translation3.localLanguage,
               fullGitMojiSpec,
               context,
-              hintsText
+              hintsText,
+              customPrompt
             ),
             INIT_DIFF_PROMPT,
             INIT_CONSISTENCY_PROMPT(translation3)
@@ -72528,7 +72595,8 @@ ${source_default.grey("\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2
       }
       if (remotes.length === 1) {
         const isPushConfirmedByUser = await Q3({
-          message: "Do you want to run `git push`?"
+          message: "Do you want to run `git push`?",
+          initialValue: false
         });
         if (hD2(isPushConfirmedByUser)) process.exit(1);
         if (isPushConfirmedByUser) {

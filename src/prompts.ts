@@ -1,5 +1,5 @@
 import { note } from '@clack/prompts';
-import { getConfig } from './commands/config';
+import { getConfig, getCustomPromptConfig, CustomPromptConfig } from './commands/config';
 import { i18n, I18nLocals } from './i18n';
 import { configureCommitlintIntegration } from './modules/commitlint/config';
 import { commitlintPrompts } from './modules/commitlint/prompts';
@@ -187,14 +187,25 @@ const userInputCodeContext = (context: string) => {
   return '';
 };
 
+const formatCustomInstructions = (customPrompt?: CustomPromptConfig): string => {
+  if (!customPrompt?.instructions?.length) return '';
+  return `\n\nProject-specific instructions:\n${customPrompt.instructions.map(i => `- ${i}`).join('\n')}`;
+};
+
 const INIT_MAIN_PROMPT = (
   language: string,
   fullGitMojiSpec: boolean,
   context: string,
-  breakingChangeHints: string = ''
+  breakingChangeHints: string = '',
+  customPrompt?: CustomPromptConfig
 ): Message => ({
   role: 'system',
   content: (() => {
+    // If system prompt override is provided, use it instead of the default
+    if (customPrompt?.systemPromptOverride) {
+      return customPrompt.systemPromptOverride + formatCustomInstructions(customPrompt);
+    }
+
     const commitConvention = fullGitMojiSpec
       ? 'GitMoji specification'
       : 'Conventional Commit Convention';
@@ -208,8 +219,9 @@ const INIT_MAIN_PROMPT = (
     const breakingChangeGuideline = getBreakingChangeInstruction();
     const generalGuidelines = `Use the present tense. Lines must not be longer than 74 characters. Use ${language} for the commit message.`;
     const userInputContext = userInputCodeContext(context);
+    const customInstructions = formatCustomInstructions(customPrompt);
 
-    return `${missionStatement}\n${diffInstruction}\n${conventionGuidelines}\n${COMMIT_FORMAT_INSTRUCTION}\n${descriptionGuideline}\n${oneLineCommitGuideline}\n${scopeInstruction}\n${breakingChangeGuideline}\n${generalGuidelines}\n${userInputContext}${breakingChangeHints}`;
+    return `${missionStatement}\n${diffInstruction}\n${conventionGuidelines}\n${COMMIT_FORMAT_INSTRUCTION}\n${descriptionGuideline}\n${oneLineCommitGuideline}\n${scopeInstruction}\n${breakingChangeGuideline}\n${generalGuidelines}\n${userInputContext}${breakingChangeHints}${customInstructions}`;
   })()
 });
 
@@ -291,6 +303,9 @@ export const getMainCommitPrompt = async (
     ? formatBreakingChangeHints(breakingChangeHints)
     : '';
 
+  // Get custom prompt config from .opencommit.jsonc
+  const customPrompt = getCustomPromptConfig();
+
   switch (config.OCO_PROMPT_MODULE) {
     case '@commitlint':
       if (!(await utils.commitlintLLMConfigExists())) {
@@ -323,7 +338,8 @@ export const getMainCommitPrompt = async (
           translation.localLanguage,
           fullGitMojiSpec,
           context,
-          hintsText
+          hintsText,
+          customPrompt
         ),
         INIT_DIFF_PROMPT,
         INIT_CONSISTENCY_PROMPT(translation)
