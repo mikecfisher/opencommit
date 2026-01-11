@@ -29,6 +29,65 @@ const getGitRemotes = async () => {
   return stdout.split('\n').filter((remote) => Boolean(remote.trim()));
 };
 
+/**
+ * Check if Graphite CLI is installed
+ */
+const assertGraphiteInstalled = async (): Promise<void> => {
+  try {
+    await execa('gt', ['--version']);
+  } catch {
+    throw new Error(
+      'Graphite CLI (gt) is not installed. Install it with: npm install -g @withgraphite/graphite-cli'
+    );
+  }
+};
+
+/**
+ * Maps git commit extra args to gt create compatible args
+ */
+const buildGraphiteArgs = (
+  commitMessage: string,
+  extraArgs: string[]
+): string[] => {
+  const gtArgs: string[] = ['-m', commitMessage];
+
+  // Mapping of compatible args
+  const argMapping: Record<string, string> = {
+    '--all': '--all',
+    '-a': '-a',
+    '--no-verify': '--no-verify',
+    '-n': '--no-verify'
+  };
+
+  // Args that don't apply to gt create
+  const unsupportedArgs = [
+    '--amend',
+    '--signoff',
+    '-s',
+    '--gpg-sign',
+    '-S',
+    '--fixup',
+    '--squash'
+  ];
+
+  for (const arg of extraArgs) {
+    if (argMapping[arg]) {
+      gtArgs.push(argMapping[arg]);
+    } else if (unsupportedArgs.some((u) => arg.startsWith(u))) {
+      console.warn(
+        chalk.yellow(
+          `Warning: '${arg}' is not supported with Graphite and will be ignored`
+        )
+      );
+    } else {
+      // Pass through unknown args
+      gtArgs.push(arg);
+    }
+  }
+
+  return gtArgs;
+};
+
 // Check for the presence of message templates
 const checkMessageTemplate = (extraArgs: string[]): string | false => {
   for (const key in extraArgs) {
@@ -44,6 +103,7 @@ interface GenerateCommitMessageFromGitDiffParams {
   context?: string;
   fullGitMojiSpec?: boolean;
   skipCommitConfirmation?: boolean;
+  useGraphite?: boolean;
 }
 
 const generateCommitMessageFromGitDiff = async ({
@@ -51,7 +111,8 @@ const generateCommitMessageFromGitDiff = async ({
   extraArgs,
   context = '',
   fullGitMojiSpec = false,
-  skipCommitConfirmation = false
+  skipCommitConfirmation = false,
+  useGraphite = false
 }: GenerateCommitMessageFromGitDiffParams): Promise<void> => {
   await assertGitRepo();
 
@@ -71,7 +132,8 @@ const generateCommitMessageFromGitDiff = async ({
     let commitMessage = await generateCommitMessageByDiff(
       diff,
       fullGitMojiSpec,
-      context
+      context,
+      useGraphite
     );
 
     debug('commit', 'Received commit message', {
@@ -125,18 +187,38 @@ ${chalk.grey('——————————————————')}`
 
     if (userAction === 'Yes' || userAction === 'Edit') {
       const committingChangesSpinner = spinner();
-      committingChangesSpinner.start('Committing the changes');
-      const { stdout } = await execa('git', [
-        'commit',
-        '-m',
-        commitMessage,
-        ...extraArgs
-      ]);
-      committingChangesSpinner.stop(
-        `${chalk.green('✔')} Successfully committed`
-      );
+
+      let stdout: string;
+      if (useGraphite) {
+        await assertGraphiteInstalled();
+        committingChangesSpinner.start('Creating Graphite stack');
+        const gtArgs = buildGraphiteArgs(commitMessage, extraArgs);
+        const result = await execa('gt', ['create', ...gtArgs]);
+        stdout = result.stdout;
+        committingChangesSpinner.stop(
+          `${chalk.green('✔')} Successfully created Graphite branch`
+        );
+      } else {
+        committingChangesSpinner.start('Committing the changes');
+        const result = await execa('git', [
+          'commit',
+          '-m',
+          commitMessage,
+          ...extraArgs
+        ]);
+        stdout = result.stdout;
+        committingChangesSpinner.stop(
+          `${chalk.green('✔')} Successfully committed`
+        );
+      }
 
       outro(stdout);
+
+      // Skip push workflow for Graphite - users should use gt submit
+      if (useGraphite) {
+        outro(chalk.dim('Use `gt submit` to push your Graphite stack'));
+        return;
+      }
 
       const remotes = await getGitRemotes();
 
@@ -218,7 +300,8 @@ ${chalk.grey('——————————————————')}`
         await generateCommitMessageFromGitDiff({
           diff,
           extraArgs,
-          fullGitMojiSpec
+          fullGitMojiSpec,
+          useGraphite
         });
       }
     }
@@ -240,7 +323,8 @@ export async function commit(
   context: string = '',
   isStageAllFlag: Boolean = false,
   fullGitMojiSpec: boolean = false,
-  skipCommitConfirmation: boolean = false
+  skipCommitConfirmation: boolean = false,
+  useGraphite: boolean = false
 ) {
   debug('commit', 'Commit function called', {
     extraArgsCount: extraArgs.length,
@@ -288,7 +372,7 @@ export async function commit(
     if (isCancel(isStageAllAndCommitConfirmedByUser)) process.exit(1);
 
     if (isStageAllAndCommitConfirmedByUser) {
-      await commit(extraArgs, context, true, fullGitMojiSpec);
+      await commit(extraArgs, context, true, fullGitMojiSpec, skipCommitConfirmation, useGraphite);
       process.exit(0);
     }
 
@@ -306,7 +390,7 @@ export async function commit(
       await gitAdd({ files });
     }
 
-    await commit(extraArgs, context, false, fullGitMojiSpec);
+    await commit(extraArgs, context, false, fullGitMojiSpec, skipCommitConfirmation, useGraphite);
     process.exit(0);
   }
 
@@ -322,7 +406,8 @@ export async function commit(
       extraArgs,
       context,
       fullGitMojiSpec,
-      skipCommitConfirmation
+      skipCommitConfirmation,
+      useGraphite
     })
   );
 

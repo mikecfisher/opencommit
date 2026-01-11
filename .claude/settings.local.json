@@ -1,11 +1,12 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(xargs cat:*)",
+      "Bash(gt create:*)"
+    ]
+  },
   "sandbox": {
     "enabled": false,
     "autoAllowBashIfSandboxed": false
-  },
-  "permissions": {
-    "allow": [
-      "Bash(xargs cat:*)"
-    ]
   }
 }

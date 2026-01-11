@@ -197,7 +197,8 @@ const INIT_MAIN_PROMPT = (
   fullGitMojiSpec: boolean,
   context: string,
   breakingChangeHints: string = '',
-  customPrompt?: CustomPromptConfig
+  customPrompt?: CustomPromptConfig,
+  useGraphite: boolean = false
 ): Message => ({
   role: 'system',
   content: (() => {
@@ -218,10 +219,13 @@ const INIT_MAIN_PROMPT = (
     const scopeInstruction = getScopeInstruction();
     const breakingChangeGuideline = getBreakingChangeInstruction();
     const generalGuidelines = `Use the present tense. Lines must not be longer than 74 characters. Use ${language} for the commit message.`;
+    const graphiteInstruction = useGraphite
+      ? '\n\nIMPORTANT FOR BRANCH NAME: The first line (subject) MUST be under 50 characters because it will be used to generate a branch name. Be extremely concise - prefer shorter words and abbreviations if needed.'
+      : '';
     const userInputContext = userInputCodeContext(context);
     const customInstructions = formatCustomInstructions(customPrompt);
 
-    return `${missionStatement}\n${diffInstruction}\n${conventionGuidelines}\n${COMMIT_FORMAT_INSTRUCTION}\n${descriptionGuideline}\n${oneLineCommitGuideline}\n${scopeInstruction}\n${breakingChangeGuideline}\n${generalGuidelines}\n${userInputContext}${breakingChangeHints}${customInstructions}`;
+    return `${missionStatement}\n${diffInstruction}\n${conventionGuidelines}\n${COMMIT_FORMAT_INSTRUCTION}\n${descriptionGuideline}\n${oneLineCommitGuideline}\n${scopeInstruction}\n${breakingChangeGuideline}\n${generalGuidelines}${graphiteInstruction}\n${userInputContext}${breakingChangeHints}${customInstructions}`;
   })()
 });
 
@@ -297,7 +301,8 @@ const INIT_CONSISTENCY_PROMPT = (translation: ConsistencyPrompt): Message => ({
 export const getMainCommitPrompt = async (
   fullGitMojiSpec: boolean,
   context: string,
-  breakingChangeHints: BreakingChangeHint[] = []
+  breakingChangeHints: BreakingChangeHint[] = [],
+  useGraphite: boolean = false
 ): Promise<Array<Message>> => {
   const hintsText = config.OCO_BREAKING_CHANGE
     ? formatBreakingChangeHints(breakingChangeHints)
@@ -339,7 +344,8 @@ export const getMainCommitPrompt = async (
           fullGitMojiSpec,
           context,
           hintsText,
-          customPrompt
+          customPrompt,
+          useGraphite
         ),
         INIT_DIFF_PROMPT,
         INIT_CONSISTENCY_PROMPT(translation)

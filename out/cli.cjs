@@ -3826,6 +3826,11 @@ function getConfigKeyDetails(key) {
         description: "Automatically detect and flag breaking changes in commit messages. Analyzes diffs for removed exports, changed signatures, and API modifications.",
         values: ["true", "false"]
       };
+    case "OCO_USE_GRAPHITE" /* OCO_USE_GRAPHITE */:
+      return {
+        description: "Use Graphite (gt create) instead of git commit. When enabled, commits will create a new stacked branch using Graphite CLI.",
+        values: ["true", "false"]
+      };
     default:
       return {
         description: "String value",
@@ -3930,6 +3935,7 @@ var init_config = __esm({
       CONFIG_KEYS2["OCO_HOOK_AUTO_UNCOMMENT"] = "OCO_HOOK_AUTO_UNCOMMENT";
       CONFIG_KEYS2["OCO_REASONING_EFFORT"] = "OCO_REASONING_EFFORT";
       CONFIG_KEYS2["OCO_BREAKING_CHANGE"] = "OCO_BREAKING_CHANGE";
+      CONFIG_KEYS2["OCO_USE_GRAPHITE"] = "OCO_USE_GRAPHITE";
       return CONFIG_KEYS2;
     })(CONFIG_KEYS || {});
     MODEL_LIST = {
@@ -4724,6 +4730,14 @@ var init_config = __esm({
           "Must be true or false"
         );
         return value;
+      },
+      ["OCO_USE_GRAPHITE" /* OCO_USE_GRAPHITE */](value) {
+        validateConfig(
+          "OCO_USE_GRAPHITE" /* OCO_USE_GRAPHITE */,
+          typeof value === "boolean",
+          "Must be true or false"
+        );
+        return value;
       }
     };
     OCO_AI_PROVIDER_ENUM = /* @__PURE__ */ ((OCO_AI_PROVIDER_ENUM2) => {
@@ -4759,7 +4773,8 @@ var init_config = __esm({
       maxTokensInput: "OCO_TOKENS_MAX_INPUT",
       maxTokensOutput: "OCO_TOKENS_MAX_OUTPUT",
       reasoningEffort: "OCO_REASONING_EFFORT",
-      gitPush: "OCO_GITPUSH"
+      gitPush: "OCO_GITPUSH",
+      useGraphite: "OCO_USE_GRAPHITE"
     };
     BLOCKED_REPO_CONFIG_KEYS = ["OCO_API_KEY", "OCO_API_URL", "OCO_API_CUSTOM_HEADERS"];
     parseJsonc = (content) => {
@@ -4814,7 +4829,8 @@ var init_config = __esm({
       // todo: deprecate
       OCO_HOOK_AUTO_UNCOMMENT: false,
       OCO_REASONING_EFFORT: "low",
-      OCO_BREAKING_CHANGE: true
+      OCO_BREAKING_CHANGE: true,
+      OCO_USE_GRAPHITE: false
     };
     initGlobalConfig = (configPath = defaultConfigPath) => {
       (0, import_fs.writeFileSync)(configPath, (0, import_ini.stringify)(DEFAULT_CONFIG), "utf8");
@@ -4850,7 +4866,8 @@ var init_config = __esm({
         OCO_GITPUSH: parseConfigVarValue(process.env.OCO_GITPUSH),
         // todo: deprecate
         OCO_REASONING_EFFORT: process.env.OCO_REASONING_EFFORT,
-        OCO_BREAKING_CHANGE: parseConfigVarValue(process.env.OCO_BREAKING_CHANGE)
+        OCO_BREAKING_CHANGE: parseConfigVarValue(process.env.OCO_BREAKING_CHANGE),
+        OCO_USE_GRAPHITE: parseConfigVarValue(process.env.OCO_USE_GRAPHITE)
       };
     };
     setGlobalConfig = (config8, configPath = defaultConfigPath) => {
@@ -70406,7 +70423,7 @@ Consider this context when generating the commit message, incorporating relevant
 Project-specific instructions:
 ${customPrompt.instructions.map((i2) => `- ${i2}`).join("\n")}`;
     };
-    INIT_MAIN_PROMPT2 = (language, fullGitMojiSpec, context, breakingChangeHints = "", customPrompt) => ({
+    INIT_MAIN_PROMPT2 = (language, fullGitMojiSpec, context, breakingChangeHints = "", customPrompt, useGraphite = false) => ({
       role: "system",
       content: (() => {
         if (customPrompt?.systemPromptOverride) {
@@ -70421,6 +70438,7 @@ ${customPrompt.instructions.map((i2) => `- ${i2}`).join("\n")}`;
         const scopeInstruction = getScopeInstruction();
         const breakingChangeGuideline = getBreakingChangeInstruction();
         const generalGuidelines = `Use the present tense. Lines must not be longer than 74 characters. Use ${language} for the commit message.`;
+        const graphiteInstruction = useGraphite ? "\n\nIMPORTANT FOR BRANCH NAME: The first line (subject) MUST be under 50 characters because it will be used to generate a branch name. Be extremely concise - prefer shorter words and abbreviations if needed." : "";
         const userInputContext = userInputCodeContext(context);
         const customInstructions = formatCustomInstructions(customPrompt);
         return `${missionStatement}
@@ -70431,7 +70449,7 @@ ${descriptionGuideline}
 ${oneLineCommitGuideline}
 ${scopeInstruction}
 ${breakingChangeGuideline}
-${generalGuidelines}
+${generalGuidelines}${graphiteInstruction}
 ${userInputContext}${breakingChangeHints}${customInstructions}`;
       })()
     });
@@ -70482,7 +70500,7 @@ ${userInputContext}${breakingChangeHints}${customInstructions}`;
       role: "assistant",
       content: getConsistencyContent(translation4)
     });
-    getMainCommitPrompt = async (fullGitMojiSpec, context, breakingChangeHints = []) => {
+    getMainCommitPrompt = async (fullGitMojiSpec, context, breakingChangeHints = [], useGraphite = false) => {
       const hintsText = config5.OCO_BREAKING_CHANGE ? formatBreakingChangeHints(breakingChangeHints) : "";
       const customPrompt = getCustomPromptConfig();
       switch (config5.OCO_PROMPT_MODULE) {
@@ -70512,7 +70530,8 @@ ${userInputContext}${breakingChangeHints}${customInstructions}`;
               fullGitMojiSpec,
               context,
               hintsText,
-              customPrompt
+              customPrompt,
+              useGraphite
             ),
             INIT_DIFF_PROMPT,
             INIT_CONSISTENCY_PROMPT(translation3)
@@ -70618,11 +70637,12 @@ var init_generateCommitMessageFromGitDiff = __esm({
     config6 = getConfig();
     MAX_TOKENS_INPUT = config6.OCO_TOKENS_MAX_INPUT;
     MAX_TOKENS_OUTPUT = config6.OCO_TOKENS_MAX_OUTPUT;
-    generateCommitMessageChatCompletionPrompt = async (diff, fullGitMojiSpec, context, breakingChangeHints = []) => {
+    generateCommitMessageChatCompletionPrompt = async (diff, fullGitMojiSpec, context, breakingChangeHints = [], useGraphite = false) => {
       const INIT_MESSAGES_PROMPT = await getMainCommitPrompt(
         fullGitMojiSpec,
         context,
-        breakingChangeHints
+        breakingChangeHints,
+        useGraphite
       );
       const chatContextAsCompletionRequest = [...INIT_MESSAGES_PROMPT];
       chatContextAsCompletionRequest.push({
@@ -70638,7 +70658,7 @@ var init_generateCommitMessageFromGitDiff = __esm({
       outputTokensTooHigh: `Token limit exceeded, OCO_TOKENS_MAX_OUTPUT must not be much higher than the default ${500 /* DEFAULT_MAX_TOKENS_OUTPUT */} tokens.`
     };
     ADJUSTMENT_FACTOR = 20;
-    generateCommitMessageByDiff = async (diff, fullGitMojiSpec = false, context = "") => {
+    generateCommitMessageByDiff = async (diff, fullGitMojiSpec = false, context = "", useGraphite = false) => {
       const diffTokens = tokenCount(diff);
       debug("generateCommitMessage", "Starting", {
         diffLength: diff.length,
@@ -70654,7 +70674,8 @@ var init_generateCommitMessageFromGitDiff = __esm({
         const INIT_MESSAGES_PROMPT = await getMainCommitPrompt(
           fullGitMojiSpec,
           context,
-          breakingChangeHints
+          breakingChangeHints,
+          useGraphite
         );
         const INIT_MESSAGES_PROMPT_LENGTH = INIT_MESSAGES_PROMPT.map(
           (msg) => tokenCount(msg.content) + 4
@@ -70690,7 +70711,8 @@ var init_generateCommitMessageFromGitDiff = __esm({
           diff,
           fullGitMojiSpec,
           context,
-          breakingChangeHints
+          breakingChangeHints,
+          useGraphite
         );
         debug("generateCommitMessage", "Calling engine", {
           messageCount: messages.length
@@ -72508,6 +72530,47 @@ var getGitRemotes = async () => {
   const { stdout } = await execa("git", ["remote"]);
   return stdout.split("\n").filter((remote) => Boolean(remote.trim()));
 };
+var assertGraphiteInstalled = async () => {
+  try {
+    await execa("gt", ["--version"]);
+  } catch {
+    throw new Error(
+      "Graphite CLI (gt) is not installed. Install it with: npm install -g @withgraphite/graphite-cli"
+    );
+  }
+};
+var buildGraphiteArgs = (commitMessage, extraArgs2) => {
+  const gtArgs = ["-m", commitMessage];
+  const argMapping = {
+    "--all": "--all",
+    "-a": "-a",
+    "--no-verify": "--no-verify",
+    "-n": "--no-verify"
+  };
+  const unsupportedArgs = [
+    "--amend",
+    "--signoff",
+    "-s",
+    "--gpg-sign",
+    "-S",
+    "--fixup",
+    "--squash"
+  ];
+  for (const arg of extraArgs2) {
+    if (argMapping[arg]) {
+      gtArgs.push(argMapping[arg]);
+    } else if (unsupportedArgs.some((u2) => arg.startsWith(u2))) {
+      console.warn(
+        source_default.yellow(
+          `Warning: '${arg}' is not supported with Graphite and will be ignored`
+        )
+      );
+    } else {
+      gtArgs.push(arg);
+    }
+  }
+  return gtArgs;
+};
 var checkMessageTemplate = (extraArgs2) => {
   for (const key in extraArgs2) {
     if (extraArgs2[key].includes(config7.OCO_MESSAGE_TEMPLATE_PLACEHOLDER))
@@ -72520,7 +72583,8 @@ var generateCommitMessageFromGitDiff = async ({
   extraArgs: extraArgs2,
   context = "",
   fullGitMojiSpec = false,
-  skipCommitConfirmation = false
+  skipCommitConfirmation = false,
+  useGraphite = false
 }) => {
   await assertGitRepo();
   debug("commit", "Starting commit message generation", {
@@ -72536,7 +72600,8 @@ var generateCommitMessageFromGitDiff = async ({
     let commitMessage = await generateCommitMessageByDiff(
       diff,
       fullGitMojiSpec,
-      context
+      context,
+      useGraphite
     );
     debug("commit", "Received commit message", {
       messageLength: commitMessage.length
@@ -72575,17 +72640,34 @@ ${source_default.grey("\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2
     }
     if (userAction === "Yes" || userAction === "Edit") {
       const committingChangesSpinner = le();
-      committingChangesSpinner.start("Committing the changes");
-      const { stdout } = await execa("git", [
-        "commit",
-        "-m",
-        commitMessage,
-        ...extraArgs2
-      ]);
-      committingChangesSpinner.stop(
-        `${source_default.green("\u2714")} Successfully committed`
-      );
+      let stdout;
+      if (useGraphite) {
+        await assertGraphiteInstalled();
+        committingChangesSpinner.start("Creating Graphite stack");
+        const gtArgs = buildGraphiteArgs(commitMessage, extraArgs2);
+        const result = await execa("gt", ["create", ...gtArgs]);
+        stdout = result.stdout;
+        committingChangesSpinner.stop(
+          `${source_default.green("\u2714")} Successfully created Graphite branch`
+        );
+      } else {
+        committingChangesSpinner.start("Committing the changes");
+        const result = await execa("git", [
+          "commit",
+          "-m",
+          commitMessage,
+          ...extraArgs2
+        ]);
+        stdout = result.stdout;
+        committingChangesSpinner.stop(
+          `${source_default.green("\u2714")} Successfully committed`
+        );
+      }
       ce(stdout);
+      if (useGraphite) {
+        ce(source_default.dim("Use `gt submit` to push your Graphite stack"));
+        return;
+      }
       const remotes = await getGitRemotes();
       if (config7.OCO_GITPUSH === false) return;
       if (!remotes.length) {
@@ -72646,7 +72728,8 @@ ${source_default.grey("\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2
         await generateCommitMessageFromGitDiff({
           diff,
           extraArgs: extraArgs2,
-          fullGitMojiSpec
+          fullGitMojiSpec,
+          useGraphite
         });
       }
     }
@@ -72660,7 +72743,7 @@ ${source_default.grey("\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2
     process.exit(1);
   }
 };
-async function commit(extraArgs2 = [], context = "", isStageAllFlag = false, fullGitMojiSpec = false, skipCommitConfirmation = false) {
+async function commit(extraArgs2 = [], context = "", isStageAllFlag = false, fullGitMojiSpec = false, skipCommitConfirmation = false, useGraphite = false) {
   debug("commit", "Commit function called", {
     extraArgsCount: extraArgs2.length,
     hasContext: context.length > 0,
@@ -72696,7 +72779,7 @@ async function commit(extraArgs2 = [], context = "", isStageAllFlag = false, ful
     });
     if (hD2(isStageAllAndCommitConfirmedByUser)) process.exit(1);
     if (isStageAllAndCommitConfirmedByUser) {
-      await commit(extraArgs2, context, true, fullGitMojiSpec);
+      await commit(extraArgs2, context, true, fullGitMojiSpec, skipCommitConfirmation, useGraphite);
       process.exit(0);
     }
     if (stagedFiles.length === 0 && changedFiles.length > 0) {
@@ -72710,7 +72793,7 @@ async function commit(extraArgs2 = [], context = "", isStageAllFlag = false, ful
       if (hD2(files)) process.exit(0);
       await gitAdd({ files });
     }
-    await commit(extraArgs2, context, false, fullGitMojiSpec);
+    await commit(extraArgs2, context, false, fullGitMojiSpec, skipCommitConfirmation, useGraphite);
     process.exit(0);
   }
   stagedFilesSpinner.stop(
@@ -72723,7 +72806,8 @@ ${stagedFiles.map((file2) => `  ${file2}`).join("\n")}`
       extraArgs: extraArgs2,
       context,
       fullGitMojiSpec,
-      skipCommitConfirmation
+      skipCommitConfirmation,
+      useGraphite
     })
   );
   if (generateCommitError) {
@@ -73530,6 +73614,12 @@ Z2(
         alias: "y",
         description: "Skip commit confirmation prompt",
         default: false
+      },
+      graphite: {
+        type: Boolean,
+        alias: "g",
+        description: "Use Graphite (gt create) instead of git commit",
+        default: false
       }
     },
     ignoreArgv: (type) => type === "unknown-flag" || type === "argument",
@@ -73545,7 +73635,9 @@ Z2(
     if (await isHookCalled()) {
       prepareCommitMessageHook();
     } else {
-      commit(extraArgs, flags.context, false, flags.fgm, flags.yes);
+      const config8 = getConfig();
+      const useGraphite = flags.graphite || config8.OCO_USE_GRAPHITE;
+      commit(extraArgs, flags.context, false, flags.fgm, flags.yes, useGraphite);
     }
   },
   extraArgs

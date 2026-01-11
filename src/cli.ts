@@ -5,7 +5,7 @@ import { cli } from 'cleye';
 import packageJSON from '../package.json';
 import { commit } from './commands/commit';
 import { commitlintConfigCommand } from './commands/commitlint';
-import { configCommand } from './commands/config';
+import { configCommand, getConfig } from './commands/config';
 import { hookCommand, isHookCalled } from './commands/githook.js';
 import { prepareCommitMessageHook } from './commands/prepare-commit-msg-hook';
 import { setupCommand } from './commands/wizard';
@@ -48,6 +48,12 @@ cli(
         alias: 'y',
         description: 'Skip commit confirmation prompt',
         default: false
+      },
+      graphite: {
+        type: Boolean,
+        alias: 'g',
+        description: 'Use Graphite (gt create) instead of git commit',
+        default: false
       }
     },
     ignoreArgv: (type) => type === 'unknown-flag' || type === 'argument',
@@ -65,7 +71,9 @@ cli(
     if (await isHookCalled()) {
       prepareCommitMessageHook();
     } else {
-      commit(extraArgs, flags.context, false, flags.fgm, flags.yes);
+      const config = getConfig();
+      const useGraphite = flags.graphite || config.OCO_USE_GRAPHITE;
+      commit(extraArgs, flags.context, false, flags.fgm, flags.yes, useGraphite);
     }
   },
   extraArgs

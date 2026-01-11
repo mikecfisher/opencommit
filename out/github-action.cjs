@@ -26020,6 +26020,11 @@ function getConfigKeyDetails(key) {
         description: "Automatically detect and flag breaking changes in commit messages. Analyzes diffs for removed exports, changed signatures, and API modifications.",
         values: ["true", "false"]
       };
+    case "OCO_USE_GRAPHITE" /* OCO_USE_GRAPHITE */:
+      return {
+        description: "Use Graphite (gt create) instead of git commit. When enabled, commits will create a new stacked branch using Graphite CLI.",
+        values: ["true", "false"]
+      };
     default:
       return {
         description: "String value",
@@ -26124,6 +26129,7 @@ var init_config = __esm({
       CONFIG_KEYS2["OCO_HOOK_AUTO_UNCOMMENT"] = "OCO_HOOK_AUTO_UNCOMMENT";
       CONFIG_KEYS2["OCO_REASONING_EFFORT"] = "OCO_REASONING_EFFORT";
       CONFIG_KEYS2["OCO_BREAKING_CHANGE"] = "OCO_BREAKING_CHANGE";
+      CONFIG_KEYS2["OCO_USE_GRAPHITE"] = "OCO_USE_GRAPHITE";
       return CONFIG_KEYS2;
     })(CONFIG_KEYS || {});
     MODEL_LIST = {
@@ -26918,6 +26924,14 @@ var init_config = __esm({
           "Must be true or false"
         );
         return value;
+      },
+      ["OCO_USE_GRAPHITE" /* OCO_USE_GRAPHITE */](value) {
+        validateConfig(
+          "OCO_USE_GRAPHITE" /* OCO_USE_GRAPHITE */,
+          typeof value === "boolean",
+          "Must be true or false"
+        );
+        return value;
       }
     };
     OCO_AI_PROVIDER_ENUM = /* @__PURE__ */ ((OCO_AI_PROVIDER_ENUM2) => {
@@ -26953,7 +26967,8 @@ var init_config = __esm({
       maxTokensInput: "OCO_TOKENS_MAX_INPUT",
       maxTokensOutput: "OCO_TOKENS_MAX_OUTPUT",
       reasoningEffort: "OCO_REASONING_EFFORT",
-      gitPush: "OCO_GITPUSH"
+      gitPush: "OCO_GITPUSH",
+      useGraphite: "OCO_USE_GRAPHITE"
     };
     BLOCKED_REPO_CONFIG_KEYS = ["OCO_API_KEY", "OCO_API_URL", "OCO_API_CUSTOM_HEADERS"];
     parseJsonc = (content) => {
@@ -27008,7 +27023,8 @@ var init_config = __esm({
       // todo: deprecate
       OCO_HOOK_AUTO_UNCOMMENT: false,
       OCO_REASONING_EFFORT: "low",
-      OCO_BREAKING_CHANGE: true
+      OCO_BREAKING_CHANGE: true,
+      OCO_USE_GRAPHITE: false
     };
     initGlobalConfig = (configPath = defaultConfigPath) => {
       (0, import_fs.writeFileSync)(configPath, (0, import_ini.stringify)(DEFAULT_CONFIG), "utf8");
@@ -27044,7 +27060,8 @@ var init_config = __esm({
         OCO_GITPUSH: parseConfigVarValue(process.env.OCO_GITPUSH),
         // todo: deprecate
         OCO_REASONING_EFFORT: process.env.OCO_REASONING_EFFORT,
-        OCO_BREAKING_CHANGE: parseConfigVarValue(process.env.OCO_BREAKING_CHANGE)
+        OCO_BREAKING_CHANGE: parseConfigVarValue(process.env.OCO_BREAKING_CHANGE),
+        OCO_USE_GRAPHITE: parseConfigVarValue(process.env.OCO_USE_GRAPHITE)
       };
     };
     setGlobalConfig = (config7, configPath = defaultConfigPath) => {
@@ -92585,7 +92602,7 @@ Consider this context when generating the commit message, incorporating relevant
 Project-specific instructions:
 ${customPrompt.instructions.map((i2) => `- ${i2}`).join("\n")}`;
     };
-    INIT_MAIN_PROMPT2 = (language, fullGitMojiSpec, context2, breakingChangeHints = "", customPrompt) => ({
+    INIT_MAIN_PROMPT2 = (language, fullGitMojiSpec, context2, breakingChangeHints = "", customPrompt, useGraphite = false) => ({
       role: "system",
       content: (() => {
         if (customPrompt?.systemPromptOverride) {
@@ -92600,6 +92617,7 @@ ${customPrompt.instructions.map((i2) => `- ${i2}`).join("\n")}`;
         const scopeInstruction = getScopeInstruction();
         const breakingChangeGuideline = getBreakingChangeInstruction();
         const generalGuidelines = `Use the present tense. Lines must not be longer than 74 characters. Use ${language} for the commit message.`;
+        const graphiteInstruction = useGraphite ? "\n\nIMPORTANT FOR BRANCH NAME: The first line (subject) MUST be under 50 characters because it will be used to generate a branch name. Be extremely concise - prefer shorter words and abbreviations if needed." : "";
         const userInputContext = userInputCodeContext(context2);
         const customInstructions = formatCustomInstructions(customPrompt);
         return `${missionStatement}
@@ -92610,7 +92628,7 @@ ${descriptionGuideline}
 ${oneLineCommitGuideline}
 ${scopeInstruction}
 ${breakingChangeGuideline}
-${generalGuidelines}
+${generalGuidelines}${graphiteInstruction}
 ${userInputContext}${breakingChangeHints}${customInstructions}`;
       })()
     });
@@ -92661,7 +92679,7 @@ ${userInputContext}${breakingChangeHints}${customInstructions}`;
       role: "assistant",
       content: getConsistencyContent(translation4)
     });
-    getMainCommitPrompt = async (fullGitMojiSpec, context2, breakingChangeHints = []) => {
+    getMainCommitPrompt = async (fullGitMojiSpec, context2, breakingChangeHints = [], useGraphite = false) => {
       const hintsText = config5.OCO_BREAKING_CHANGE ? formatBreakingChangeHints(breakingChangeHints) : "";
       const customPrompt = getCustomPromptConfig();
       switch (config5.OCO_PROMPT_MODULE) {
@@ -92691,7 +92709,8 @@ ${userInputContext}${breakingChangeHints}${customInstructions}`;
               fullGitMojiSpec,
               context2,
               hintsText,
-              customPrompt
+              customPrompt,
+              useGraphite
             ),
             INIT_DIFF_PROMPT,
             INIT_CONSISTENCY_PROMPT(translation3)
@@ -92797,11 +92816,12 @@ var init_generateCommitMessageFromGitDiff = __esm({
     config6 = getConfig();
     MAX_TOKENS_INPUT = config6.OCO_TOKENS_MAX_INPUT;
     MAX_TOKENS_OUTPUT = config6.OCO_TOKENS_MAX_OUTPUT;
-    generateCommitMessageChatCompletionPrompt = async (diff, fullGitMojiSpec, context2, breakingChangeHints = []) => {
+    generateCommitMessageChatCompletionPrompt = async (diff, fullGitMojiSpec, context2, breakingChangeHints = [], useGraphite = false) => {
       const INIT_MESSAGES_PROMPT = await getMainCommitPrompt(
         fullGitMojiSpec,
         context2,
-        breakingChangeHints
+        breakingChangeHints,
+        useGraphite
       );
       const chatContextAsCompletionRequest = [...INIT_MESSAGES_PROMPT];
       chatContextAsCompletionRequest.push({
@@ -92817,7 +92837,7 @@ var init_generateCommitMessageFromGitDiff = __esm({
       outputTokensTooHigh: `Token limit exceeded, OCO_TOKENS_MAX_OUTPUT must not be much higher than the default ${500 /* DEFAULT_MAX_TOKENS_OUTPUT */} tokens.`
     };
     ADJUSTMENT_FACTOR = 20;
-    generateCommitMessageByDiff = async (diff, fullGitMojiSpec = false, context2 = "") => {
+    generateCommitMessageByDiff = async (diff, fullGitMojiSpec = false, context2 = "", useGraphite = false) => {
       const diffTokens = tokenCount(diff);
       debug("generateCommitMessage", "Starting", {
         diffLength: diff.length,
@@ -92833,7 +92853,8 @@ var init_generateCommitMessageFromGitDiff = __esm({
         const INIT_MESSAGES_PROMPT = await getMainCommitPrompt(
           fullGitMojiSpec,
           context2,
-          breakingChangeHints
+          breakingChangeHints,
+          useGraphite
         );
         const INIT_MESSAGES_PROMPT_LENGTH = INIT_MESSAGES_PROMPT.map(
           (msg) => tokenCount(msg.content) + 4
@@ -92869,7 +92890,8 @@ var init_generateCommitMessageFromGitDiff = __esm({
           diff,
           fullGitMojiSpec,
           context2,
-          breakingChangeHints
+          breakingChangeHints,
+          useGraphite
         );
         debug("generateCommitMessage", "Calling engine", {
           messageCount: messages.length

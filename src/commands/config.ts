@@ -30,7 +30,8 @@ export enum CONFIG_KEYS {
   OCO_GITPUSH = 'OCO_GITPUSH', // todo: deprecate
   OCO_HOOK_AUTO_UNCOMMENT = 'OCO_HOOK_AUTO_UNCOMMENT',
   OCO_REASONING_EFFORT = 'OCO_REASONING_EFFORT',
-  OCO_BREAKING_CHANGE = 'OCO_BREAKING_CHANGE'
+  OCO_BREAKING_CHANGE = 'OCO_BREAKING_CHANGE',
+  OCO_USE_GRAPHITE = 'OCO_USE_GRAPHITE'
 }
 
 export enum CONFIG_MODES {
@@ -874,6 +875,15 @@ export const configValidators = {
       'Must be true or false'
     );
     return value;
+  },
+
+  [CONFIG_KEYS.OCO_USE_GRAPHITE](value: any) {
+    validateConfig(
+      CONFIG_KEYS.OCO_USE_GRAPHITE,
+      typeof value === 'boolean',
+      'Must be true or false'
+    );
+    return value;
   }
 };
 
@@ -916,6 +926,7 @@ export type ConfigType = {
   [CONFIG_KEYS.OCO_HOOK_AUTO_UNCOMMENT]: boolean;
   [CONFIG_KEYS.OCO_REASONING_EFFORT]?: ReasoningEffort;
   [CONFIG_KEYS.OCO_BREAKING_CHANGE]: boolean;
+  [CONFIG_KEYS.OCO_USE_GRAPHITE]: boolean;
 };
 
 export const defaultConfigPath = pathJoin(homedir(), '.opencommit');
@@ -937,7 +948,8 @@ const REPO_CONFIG_KEY_MAP: Record<string, string> = {
   maxTokensInput: 'OCO_TOKENS_MAX_INPUT',
   maxTokensOutput: 'OCO_TOKENS_MAX_OUTPUT',
   reasoningEffort: 'OCO_REASONING_EFFORT',
-  gitPush: 'OCO_GITPUSH'
+  gitPush: 'OCO_GITPUSH',
+  useGraphite: 'OCO_USE_GRAPHITE'
 };
 
 // Keys blocked from repo config for security (could be accidentally committed)
@@ -1044,7 +1056,8 @@ export const DEFAULT_CONFIG = {
   OCO_GITPUSH: true, // todo: deprecate
   OCO_HOOK_AUTO_UNCOMMENT: false,
   OCO_REASONING_EFFORT: 'low' as ReasoningEffort,
-  OCO_BREAKING_CHANGE: true
+  OCO_BREAKING_CHANGE: true,
+  OCO_USE_GRAPHITE: false
 };
 
 const initGlobalConfig = (configPath: string = defaultConfigPath) => {
@@ -1087,7 +1100,8 @@ const getEnvConfig = (envPath: string) => {
 
     OCO_GITPUSH: parseConfigVarValue(process.env.OCO_GITPUSH), // todo: deprecate
     OCO_REASONING_EFFORT: process.env.OCO_REASONING_EFFORT as ReasoningEffort,
-    OCO_BREAKING_CHANGE: parseConfigVarValue(process.env.OCO_BREAKING_CHANGE)
+    OCO_BREAKING_CHANGE: parseConfigVarValue(process.env.OCO_BREAKING_CHANGE),
+    OCO_USE_GRAPHITE: parseConfigVarValue(process.env.OCO_USE_GRAPHITE)
   };
 };
 
@@ -1332,6 +1346,12 @@ function getConfigKeyDetails(key) {
       return {
         description:
           'Automatically detect and flag breaking changes in commit messages. Analyzes diffs for removed exports, changed signatures, and API modifications.',
+        values: ['true', 'false']
+      };
+    case CONFIG_KEYS.OCO_USE_GRAPHITE:
+      return {
+        description:
+          'Use Graphite (gt create) instead of git commit. When enabled, commits will create a new stacked branch using Graphite CLI.',
         values: ['true', 'false']
       };
     default:

@@ -22,12 +22,14 @@ const generateCommitMessageChatCompletionPrompt = async (
   diff: string,
   fullGitMojiSpec: boolean,
   context: string,
-  breakingChangeHints: BreakingChangeHint[] = []
+  breakingChangeHints: BreakingChangeHint[] = [],
+  useGraphite: boolean = false
 ): Promise<Array<Message>> => {
   const INIT_MESSAGES_PROMPT = await getMainCommitPrompt(
     fullGitMojiSpec,
     context,
-    breakingChangeHints
+    breakingChangeHints,
+    useGraphite
   );
 
   const chatContextAsCompletionRequest = [...INIT_MESSAGES_PROMPT];
@@ -52,7 +54,8 @@ const ADJUSTMENT_FACTOR = 20;
 export const generateCommitMessageByDiff = async (
   diff: string,
   fullGitMojiSpec: boolean = false,
-  context: string = ''
+  context: string = '',
+  useGraphite: boolean = false
 ): Promise<string> => {
   const diffTokens = tokenCount(diff);
 
@@ -76,7 +79,8 @@ export const generateCommitMessageByDiff = async (
     const INIT_MESSAGES_PROMPT = await getMainCommitPrompt(
       fullGitMojiSpec,
       context,
-      breakingChangeHints
+      breakingChangeHints,
+      useGraphite
     );
 
     const INIT_MESSAGES_PROMPT_LENGTH = INIT_MESSAGES_PROMPT.map(
@@ -125,7 +129,8 @@ export const generateCommitMessageByDiff = async (
       diff,
       fullGitMojiSpec,
       context,
-      breakingChangeHints
+      breakingChangeHints,
+      useGraphite
     );
 
     debug('generateCommitMessage', 'Calling engine', {
