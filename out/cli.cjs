@@ -72645,7 +72645,7 @@ ${source_default.grey("\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2
         await assertGraphiteInstalled();
         committingChangesSpinner.start("Creating Graphite stack");
         const gtArgs = buildGraphiteArgs(commitMessage, extraArgs2);
-        const result = await execa("gt", ["create", ...gtArgs]);
+        const result = await execa("gt", ["create", ...gtArgs], { stdin: "inherit" });
         stdout = result.stdout;
         committingChangesSpinner.stop(
           `${source_default.green("\u2714")} Successfully created Graphite branch`
@@ -72657,7 +72657,7 @@ ${source_default.grey("\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2
           "-m",
           commitMessage,
           ...extraArgs2
-        ]);
+        ], { stdin: "inherit" });
         stdout = result.stdout;
         committingChangesSpinner.stop(
           `${source_default.green("\u2714")} Successfully committed`
