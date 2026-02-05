@@ -6,6 +6,7 @@ import { promisify } from 'util';
 import { render } from 'cli-testing-library';
 import { resolve } from 'path';
 import { rm } from 'fs';
+import { chmod, mkdir, writeFile } from 'fs/promises';
 const fsExec = promisify(exec);
 const fsRemove = promisify(rm);
 
@@ -29,6 +30,14 @@ const prepareNoRemoteGitRepository = async (): Promise<{
     gitDir,
     cleanup
   };
+};
+
+const createGhStub = async (binDir: string): Promise<void> => {
+  await mkdir(binDir, { recursive: true });
+  const ghPath = path.join(binDir, 'gh');
+  const ghScript = `#!/usr/bin/env bash\n\necho \"gh stub $@\"\n`;
+  await writeFile(ghPath, ghScript);
+  await chmod(ghPath, 0o755);
 };
 
 /**
@@ -199,6 +208,66 @@ describe('cli flow to push git branch', () => {
     expect(
       await findByText('Successfully pushed all commits to origin')
     ).toBeInTheConsole();
+
+    await cleanup();
+  });
+
+  it('auto-pushes and creates PR when --pr is set', async () => {
+    const { gitDir, cleanup } = await prepareOneRemoteGitRepository();
+    const binDir = path.resolve(path.dirname(gitDir), 'bin');
+    await createGhStub(binDir);
+
+    await render('echo', [`'console.log("Hello World");' > index.ts`], {
+      cwd: gitDir
+    });
+    await render('git', ['add index.ts'], { cwd: gitDir });
+
+    const { findByText, queryByText, userEvent } = await render(
+      `PATH="${binDir}:$PATH" OCO_AI_PROVIDER='test' OCO_GITPUSH='false' node`,
+      [resolve('./out/cli.cjs'), '--pr'],
+      { cwd: gitDir }
+    );
+    expect(await findByText('Confirm the commit message?')).toBeInTheConsole();
+    userEvent.keyboard('[Enter]');
+
+    expect(
+      await queryByText('Choose a remote to push to')
+    ).not.toBeInTheConsole();
+    expect(
+      await queryByText('Do you want to run `git push`?')
+    ).not.toBeInTheConsole();
+    expect(
+      await findByText('Successfully pushed all commits to origin')
+    ).toBeInTheConsole();
+    expect(
+      await findByText(/gh stub pr create --fill/)
+    ).toBeInTheConsole();
+
+    await cleanup();
+  });
+
+  it('fails when --pr is set and origin is missing', async () => {
+    const { gitDir, cleanup } = await prepareNoRemoteGitRepository();
+    const binDir = path.resolve(path.dirname(gitDir), 'bin');
+    await createGhStub(binDir);
+
+    await render('echo', [`'console.log("Hello World");' > index.ts`], {
+      cwd: gitDir
+    });
+    await render('git', ['add index.ts'], { cwd: gitDir });
+
+    const { findByText, queryByText, userEvent } = await render(
+      `PATH="${binDir}:$PATH" OCO_AI_PROVIDER='test' node`,
+      [resolve('./out/cli.cjs'), '--pr'],
+      { cwd: gitDir }
+    );
+    expect(await findByText('Confirm the commit message?')).toBeInTheConsole();
+    userEvent.keyboard('[Enter]');
+
+    expect(await findByText("No 'origin' remote found.")).toBeInTheConsole();
+    expect(
+      await queryByText(/gh stub pr create --fill/)
+    ).not.toBeInTheConsole();
 
     await cleanup();
   });

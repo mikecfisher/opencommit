@@ -15,6 +15,34 @@ import { runMigrations } from './migrations/_run.js';
 
 const extraArgs = process.argv.slice(2);
 
+const stripOcoArgs = (argv: string[]): string[] => {
+  const ocoBooleanFlags = new Set([
+    '--debug',
+    '-d',
+    '--fgm',
+    '--yes',
+    '-y',
+    '--graphite',
+    '-g',
+    '--pr'
+  ]);
+  const ocoValueFlags = new Set(['--context', '-c']);
+
+  const filtered: string[] = [];
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    if (ocoBooleanFlags.has(arg)) continue;
+    if (ocoValueFlags.has(arg)) {
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith('--context=')) continue;
+    filtered.push(arg);
+  }
+
+  return filtered;
+};
+
 cli(
   {
     version: packageJSON.version,
@@ -54,6 +82,11 @@ cli(
         alias: 'g',
         description: 'Use Graphite (gt create) instead of git commit',
         default: false
+      },
+      pr: {
+        type: Boolean,
+        description: 'Auto-push to origin and create a GitHub PR',
+        default: false
       }
     },
     ignoreArgv: (type) => type === 'unknown-flag' || type === 'argument',
@@ -73,7 +106,16 @@ cli(
     } else {
       const config = getConfig();
       const useGraphite = flags.graphite || config.OCO_USE_GRAPHITE;
-      commit(extraArgs, flags.context, false, flags.fgm, flags.yes, useGraphite);
+      const commitArgs = stripOcoArgs(extraArgs);
+      commit(
+        commitArgs,
+        flags.context,
+        false,
+        flags.fgm,
+        flags.yes,
+        flags.pr,
+        useGraphite
+      );
     }
   },
   extraArgs

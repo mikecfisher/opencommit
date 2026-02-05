@@ -35,7 +35,7 @@ export const hookCommand = command(
     parameters: ['<set/unset>']
   },
   async (argv) => {
-    const HOOK_URL = __filename;
+    const HOOK_URL = import.meta.filename;
     const SYMLINK_URL = await getHooksPath();
     try {
       await assertGitRepo();

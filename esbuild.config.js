@@ -1,12 +1,28 @@
 import { build } from 'esbuild';
 import fs from 'fs';
 
+// Banner to provide import.meta shims for CJS output
+const cjsBanner = `
+const __import_meta_url__ = require('url').pathToFileURL(__filename).href;
+const __import_meta_filename__ = __filename;
+const __import_meta_dirname__ = __dirname;
+`;
+
+// Define replacements for import.meta properties
+const importMetaDefine = {
+  'import.meta.url': '__import_meta_url__',
+  'import.meta.filename': '__import_meta_filename__',
+  'import.meta.dirname': '__import_meta_dirname__'
+};
+
 await build({
   entryPoints: ['./src/cli.ts'],
   bundle: true,
   platform: 'node',
   format: 'cjs',
-  outfile: './out/cli.cjs'
+  outfile: './out/cli.cjs',
+  banner: { js: cjsBanner },
+  define: importMetaDefine
 });
 
 await build({
@@ -14,7 +30,9 @@ await build({
   bundle: true,
   platform: 'node',
   format: 'cjs',
-  outfile: './out/github-action.cjs'
+  outfile: './out/github-action.cjs',
+  banner: { js: cjsBanner },
+  define: importMetaDefine
 });
 
 const wasmFile = fs.readFileSync(

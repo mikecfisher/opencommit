@@ -31,7 +31,8 @@ export enum CONFIG_KEYS {
   OCO_HOOK_AUTO_UNCOMMENT = 'OCO_HOOK_AUTO_UNCOMMENT',
   OCO_REASONING_EFFORT = 'OCO_REASONING_EFFORT',
   OCO_BREAKING_CHANGE = 'OCO_BREAKING_CHANGE',
-  OCO_USE_GRAPHITE = 'OCO_USE_GRAPHITE'
+  OCO_USE_GRAPHITE = 'OCO_USE_GRAPHITE',
+  OCO_SKIP_VERSION_CHECK = 'OCO_SKIP_VERSION_CHECK'
 }
 
 export enum CONFIG_MODES {
@@ -884,6 +885,15 @@ export const configValidators = {
       'Must be true or false'
     );
     return value;
+  },
+
+  [CONFIG_KEYS.OCO_SKIP_VERSION_CHECK](value: any) {
+    validateConfig(
+      CONFIG_KEYS.OCO_SKIP_VERSION_CHECK,
+      typeof value === 'boolean',
+      'Must be true or false'
+    );
+    return value;
   }
 };
 
@@ -927,6 +937,7 @@ export type ConfigType = {
   [CONFIG_KEYS.OCO_REASONING_EFFORT]?: ReasoningEffort;
   [CONFIG_KEYS.OCO_BREAKING_CHANGE]: boolean;
   [CONFIG_KEYS.OCO_USE_GRAPHITE]: boolean;
+  [CONFIG_KEYS.OCO_SKIP_VERSION_CHECK]: boolean;
 };
 
 export const defaultConfigPath = pathJoin(homedir(), '.opencommit');
@@ -949,7 +960,8 @@ const REPO_CONFIG_KEY_MAP: Record<string, string> = {
   maxTokensOutput: 'OCO_TOKENS_MAX_OUTPUT',
   reasoningEffort: 'OCO_REASONING_EFFORT',
   gitPush: 'OCO_GITPUSH',
-  useGraphite: 'OCO_USE_GRAPHITE'
+  useGraphite: 'OCO_USE_GRAPHITE',
+  skipVersionCheck: 'OCO_SKIP_VERSION_CHECK'
 };
 
 // Keys blocked from repo config for security (could be accidentally committed)
@@ -1057,7 +1069,8 @@ export const DEFAULT_CONFIG = {
   OCO_HOOK_AUTO_UNCOMMENT: false,
   OCO_REASONING_EFFORT: 'low' as ReasoningEffort,
   OCO_BREAKING_CHANGE: true,
-  OCO_USE_GRAPHITE: false
+  OCO_USE_GRAPHITE: false,
+  OCO_SKIP_VERSION_CHECK: false
 };
 
 const initGlobalConfig = (configPath: string = defaultConfigPath) => {
@@ -1101,7 +1114,8 @@ const getEnvConfig = (envPath: string) => {
     OCO_GITPUSH: parseConfigVarValue(process.env.OCO_GITPUSH), // todo: deprecate
     OCO_REASONING_EFFORT: process.env.OCO_REASONING_EFFORT as ReasoningEffort,
     OCO_BREAKING_CHANGE: parseConfigVarValue(process.env.OCO_BREAKING_CHANGE),
-    OCO_USE_GRAPHITE: parseConfigVarValue(process.env.OCO_USE_GRAPHITE)
+    OCO_USE_GRAPHITE: parseConfigVarValue(process.env.OCO_USE_GRAPHITE),
+    OCO_SKIP_VERSION_CHECK: parseConfigVarValue(process.env.OCO_SKIP_VERSION_CHECK)
   };
 };
 
@@ -1352,6 +1366,12 @@ function getConfigKeyDetails(key) {
       return {
         description:
           'Use Graphite (gt create) instead of git commit. When enabled, commits will create a new stacked branch using Graphite CLI.',
+        values: ['true', 'false']
+      };
+    case CONFIG_KEYS.OCO_SKIP_VERSION_CHECK:
+      return {
+        description:
+          'Skip the version check that notifies about newer versions of opencommit.',
         values: ['true', 'false']
       };
     default:

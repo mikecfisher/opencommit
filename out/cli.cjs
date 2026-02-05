@@ -1,4 +1,9 @@
 #!/usr/bin/env node
+
+const __import_meta_url__ = require('url').pathToFileURL(__filename).href;
+const __import_meta_filename__ = __filename;
+const __import_meta_dirname__ = __dirname;
+
 "use strict";
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -3831,6 +3836,11 @@ function getConfigKeyDetails(key) {
         description: "Use Graphite (gt create) instead of git commit. When enabled, commits will create a new stacked branch using Graphite CLI.",
         values: ["true", "false"]
       };
+    case "OCO_SKIP_VERSION_CHECK" /* OCO_SKIP_VERSION_CHECK */:
+      return {
+        description: "Skip the version check that notifies about newer versions of opencommit.",
+        values: ["true", "false"]
+      };
     default:
       return {
         description: "String value",
@@ -3936,6 +3946,7 @@ var init_config = __esm({
       CONFIG_KEYS2["OCO_REASONING_EFFORT"] = "OCO_REASONING_EFFORT";
       CONFIG_KEYS2["OCO_BREAKING_CHANGE"] = "OCO_BREAKING_CHANGE";
       CONFIG_KEYS2["OCO_USE_GRAPHITE"] = "OCO_USE_GRAPHITE";
+      CONFIG_KEYS2["OCO_SKIP_VERSION_CHECK"] = "OCO_SKIP_VERSION_CHECK";
       return CONFIG_KEYS2;
     })(CONFIG_KEYS || {});
     MODEL_LIST = {
@@ -4738,6 +4749,14 @@ var init_config = __esm({
           "Must be true or false"
         );
         return value;
+      },
+      ["OCO_SKIP_VERSION_CHECK" /* OCO_SKIP_VERSION_CHECK */](value) {
+        validateConfig(
+          "OCO_SKIP_VERSION_CHECK" /* OCO_SKIP_VERSION_CHECK */,
+          typeof value === "boolean",
+          "Must be true or false"
+        );
+        return value;
       }
     };
     OCO_AI_PROVIDER_ENUM = /* @__PURE__ */ ((OCO_AI_PROVIDER_ENUM2) => {
@@ -4774,7 +4793,8 @@ var init_config = __esm({
       maxTokensOutput: "OCO_TOKENS_MAX_OUTPUT",
       reasoningEffort: "OCO_REASONING_EFFORT",
       gitPush: "OCO_GITPUSH",
-      useGraphite: "OCO_USE_GRAPHITE"
+      useGraphite: "OCO_USE_GRAPHITE",
+      skipVersionCheck: "OCO_SKIP_VERSION_CHECK"
     };
     BLOCKED_REPO_CONFIG_KEYS = ["OCO_API_KEY", "OCO_API_URL", "OCO_API_CUSTOM_HEADERS"];
     parseJsonc = (content) => {
@@ -4830,7 +4850,8 @@ var init_config = __esm({
       OCO_HOOK_AUTO_UNCOMMENT: false,
       OCO_REASONING_EFFORT: "low",
       OCO_BREAKING_CHANGE: true,
-      OCO_USE_GRAPHITE: false
+      OCO_USE_GRAPHITE: false,
+      OCO_SKIP_VERSION_CHECK: false
     };
     initGlobalConfig = (configPath = defaultConfigPath) => {
       (0, import_fs.writeFileSync)(configPath, (0, import_ini.stringify)(DEFAULT_CONFIG), "utf8");
@@ -4867,7 +4888,8 @@ var init_config = __esm({
         // todo: deprecate
         OCO_REASONING_EFFORT: process.env.OCO_REASONING_EFFORT,
         OCO_BREAKING_CHANGE: parseConfigVarValue(process.env.OCO_BREAKING_CHANGE),
-        OCO_USE_GRAPHITE: parseConfigVarValue(process.env.OCO_USE_GRAPHITE)
+        OCO_USE_GRAPHITE: parseConfigVarValue(process.env.OCO_USE_GRAPHITE),
+        OCO_SKIP_VERSION_CHECK: parseConfigVarValue(process.env.OCO_SKIP_VERSION_CHECK)
       };
     };
     setGlobalConfig = (config8, configPath = defaultConfigPath) => {
@@ -69813,21 +69835,23 @@ ${STRUCTURE_OF_COMMIT}${breakingChangeHints}`
 });
 
 // src/modules/commitlint/pwd-commitlint.ts
-var import_promises, import_path3, findModulePath, getCommitLintModuleType, getCommitLintPWDConfig;
+var import_promises, import_path3, import_module, require2, findModulePath, getCommitLintModuleType, getCommitLintPWDConfig;
 var init_pwd_commitlint = __esm({
   "src/modules/commitlint/pwd-commitlint.ts"() {
     "use strict";
     import_promises = __toESM(require("fs/promises"), 1);
     import_path3 = __toESM(require("path"), 1);
+    import_module = require("module");
+    require2 = (0, import_module.createRequire)(__import_meta_url__);
     findModulePath = (moduleName) => {
       const searchPaths = [
         import_path3.default.join("node_modules", moduleName),
         import_path3.default.join("node_modules", ".pnpm"),
-        import_path3.default.resolve(__dirname, "../..")
+        import_path3.default.resolve(__import_meta_dirname__, "../..")
       ];
       for (const basePath of searchPaths) {
         try {
-          const resolvedPath = require.resolve(moduleName, { paths: [basePath] });
+          const resolvedPath = require2.resolve(moduleName, { paths: [basePath] });
           return resolvedPath;
         } catch {
         }
@@ -69848,7 +69872,7 @@ var init_pwd_commitlint = __esm({
       switch (await getCommitLintModuleType()) {
         case "cjs":
           modulePath = findModulePath("@commitlint/load");
-          load = require(modulePath).default;
+          load = require2(modulePath).default;
           break;
         case "esm":
           modulePath = findModulePath("@commitlint/load/lib/load.js");
@@ -71189,8 +71213,10 @@ var package_default = {
     start: "node ./out/cli.cjs",
     "ollama:start": "OCO_AI_PROVIDER='ollama' node ./out/cli.cjs",
     dev: "ts-node ./src/cli.ts",
+    "dev:bun": "bun run ./src/cli.ts",
     "dev:gemini": "OCO_AI_PROVIDER='gemini' ts-node ./src/cli.ts",
     build: "npx rimraf out && node esbuild.config.js",
+    "build:bun": "bun run esbuild.config.js",
     "build:push": "npm run build && git add . && git commit -m 'build' && git push",
     deploy: "npm publish --tag latest",
     "deploy:build": "npm run build:push && git push --tags && npm run deploy",
@@ -72527,7 +72553,8 @@ var trytm = async (promise2) => {
 init_config();
 var config7 = getConfig();
 var getGitRemotes = async () => {
-  const { stdout } = await execa("git", ["remote"]);
+  const gitDir = await getGitDir();
+  const { stdout } = await execa("git", ["remote"], { cwd: gitDir });
   return stdout.split("\n").filter((remote) => Boolean(remote.trim()));
 };
 var assertGraphiteInstalled = async () => {
@@ -72538,6 +72565,68 @@ var assertGraphiteInstalled = async () => {
       "Graphite CLI (gt) is not installed. Install it with: npm install -g @withgraphite/graphite-cli"
     );
   }
+};
+var assertGhInstalled = async () => {
+  try {
+    await execa("gh", ["--version"]);
+  } catch {
+    throw new Error(
+      "GitHub CLI (gh) is not installed. Install it from https://cli.github.com/"
+    );
+  }
+};
+var parseGitRemote = (remoteUrl) => {
+  const trimmed = remoteUrl.trim();
+  const sshMatch = trimmed.match(/^git@([^:]+):([^/]+\/[^/]+?)(?:\.git)?$/);
+  if (sshMatch) {
+    return { host: sshMatch[1], repo: sshMatch[2] };
+  }
+  const sshUrlMatch = trimmed.match(
+    /^ssh:\/\/git@([^/]+)\/([^/]+\/[^/]+?)(?:\.git)?$/
+  );
+  if (sshUrlMatch) {
+    return { host: sshUrlMatch[1], repo: sshUrlMatch[2] };
+  }
+  const httpsMatch = trimmed.match(
+    /^https?:\/\/([^/]+)\/([^/]+\/[^/]+?)(?:\.git)?$/
+  );
+  if (httpsMatch) {
+    return { host: httpsMatch[1], repo: httpsMatch[2] };
+  }
+  return null;
+};
+var getOriginRepoSlug = async () => {
+  const gitDir = await getGitDir();
+  const { stdout } = await execa("git", ["remote", "get-url", "origin"], {
+    cwd: gitDir
+  });
+  const parsed = parseGitRemote(stdout);
+  if (!parsed) return null;
+  if (parsed.host === "github.com") return parsed.repo;
+  return `${parsed.host}/${parsed.repo}`;
+};
+var pushToOriginForPr = async () => {
+  const gitDir = await getGitDir();
+  const pushSpinner = le();
+  pushSpinner.start(`Running 'git push -u origin HEAD'`);
+  const { stdout } = await execa("git", ["push", "-u", "origin", "HEAD"], {
+    cwd: gitDir
+  });
+  pushSpinner.stop(`${source_default.green("\u2714")} Successfully pushed all commits to origin`);
+  if (stdout) ce(stdout);
+};
+var createPullRequest = async () => {
+  const gitDir = await getGitDir();
+  await assertGhInstalled();
+  const repoSlug = await getOriginRepoSlug();
+  const ghArgs = ["pr", "create", "--fill"];
+  if (repoSlug) {
+    ghArgs.push("-R", repoSlug);
+  }
+  await execa("gh", ghArgs, {
+    cwd: gitDir,
+    stdio: "inherit"
+  });
 };
 var buildGraphiteArgs = (commitMessage, extraArgs2) => {
   const gtArgs = ["-m", commitMessage];
@@ -72584,6 +72673,7 @@ var generateCommitMessageFromGitDiff = async ({
   context = "",
   fullGitMojiSpec = false,
   skipCommitConfirmation = false,
+  createPr = false,
   useGraphite = false
 }) => {
   await assertGitRepo();
@@ -72645,7 +72735,7 @@ ${source_default.grey("\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2
         await assertGraphiteInstalled();
         committingChangesSpinner.start("Creating Graphite stack");
         const gtArgs = buildGraphiteArgs(commitMessage, extraArgs2);
-        const result = await execa("gt", ["create", ...gtArgs]);
+        const result = await execa("gt", ["create", ...gtArgs], { stdin: "inherit" });
         stdout = result.stdout;
         committingChangesSpinner.stop(
           `${source_default.green("\u2714")} Successfully created Graphite branch`
@@ -72657,7 +72747,7 @@ ${source_default.grey("\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2
           "-m",
           commitMessage,
           ...extraArgs2
-        ]);
+        ], { stdin: "inherit" });
         stdout = result.stdout;
         committingChangesSpinner.stop(
           `${source_default.green("\u2714")} Successfully committed`
@@ -72666,9 +72756,22 @@ ${source_default.grey("\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2
       ce(stdout);
       if (useGraphite) {
         ce(source_default.dim("Use `gt submit` to push your Graphite stack"));
+        if (createPr) {
+          ce(source_default.dim("Skipping PR creation because Graphite is enabled"));
+        }
         return;
       }
       const remotes = await getGitRemotes();
+      if (createPr) {
+        if (!remotes.includes("origin")) {
+          throw new Error(
+            "No 'origin' remote found. Add one with: git remote add origin <url>"
+          );
+        }
+        await pushToOriginForPr();
+        await createPullRequest();
+        return;
+      }
       if (config7.OCO_GITPUSH === false) return;
       if (!remotes.length) {
         const { stdout: stdout2 } = await execa("git", ["push"]);
@@ -72729,6 +72832,7 @@ ${source_default.grey("\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2
           diff,
           extraArgs: extraArgs2,
           fullGitMojiSpec,
+          createPr,
           useGraphite
         });
       }
@@ -72743,7 +72847,7 @@ ${source_default.grey("\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2
     process.exit(1);
   }
 };
-async function commit(extraArgs2 = [], context = "", isStageAllFlag = false, fullGitMojiSpec = false, skipCommitConfirmation = false, useGraphite = false) {
+async function commit(extraArgs2 = [], context = "", isStageAllFlag = false, fullGitMojiSpec = false, skipCommitConfirmation = false, createPr = false, useGraphite = false) {
   debug("commit", "Commit function called", {
     extraArgsCount: extraArgs2.length,
     hasContext: context.length > 0,
@@ -72779,7 +72883,15 @@ async function commit(extraArgs2 = [], context = "", isStageAllFlag = false, ful
     });
     if (hD2(isStageAllAndCommitConfirmedByUser)) process.exit(1);
     if (isStageAllAndCommitConfirmedByUser) {
-      await commit(extraArgs2, context, true, fullGitMojiSpec, skipCommitConfirmation, useGraphite);
+      await commit(
+        extraArgs2,
+        context,
+        true,
+        fullGitMojiSpec,
+        skipCommitConfirmation,
+        createPr,
+        useGraphite
+      );
       process.exit(0);
     }
     if (stagedFiles.length === 0 && changedFiles.length > 0) {
@@ -72793,7 +72905,15 @@ async function commit(extraArgs2 = [], context = "", isStageAllFlag = false, ful
       if (hD2(files)) process.exit(0);
       await gitAdd({ files });
     }
-    await commit(extraArgs2, context, false, fullGitMojiSpec, skipCommitConfirmation, useGraphite);
+    await commit(
+      extraArgs2,
+      context,
+      false,
+      fullGitMojiSpec,
+      skipCommitConfirmation,
+      createPr,
+      useGraphite
+    );
     process.exit(0);
   }
   stagedFilesSpinner.stop(
@@ -72807,6 +72927,7 @@ ${stagedFiles.map((file2) => `  ${file2}`).join("\n")}`
       context,
       fullGitMojiSpec,
       skipCommitConfirmation,
+      createPr,
       useGraphite
     })
   );
@@ -72887,7 +73008,7 @@ var hookCommand = G3(
     parameters: ["<set/unset>"]
   },
   async (argv) => {
-    const HOOK_URL = __filename;
+    const HOOK_URL = __import_meta_filename__;
     const SYMLINK_URL = await getHooksPath();
     try {
       await assertGitRepo();
@@ -73401,7 +73522,12 @@ var getOpenCommitLatestVersion = async () => {
 };
 
 // src/utils/checkIsLatestVersion.ts
+init_config();
 var checkIsLatestVersion = async () => {
+  const config8 = getConfig();
+  if (config8.OCO_SKIP_VERSION_CHECK) {
+    return;
+  }
   const latestVersion = await getOpenCommitLatestVersion();
   if (latestVersion) {
     const currentVersion = package_default.version;
@@ -73581,6 +73707,31 @@ var runMigrations = async () => {
 
 // src/cli.ts
 var extraArgs = process.argv.slice(2);
+var stripOcoArgs = (argv) => {
+  const ocoBooleanFlags = /* @__PURE__ */ new Set([
+    "--debug",
+    "-d",
+    "--fgm",
+    "--yes",
+    "-y",
+    "--graphite",
+    "-g",
+    "--pr"
+  ]);
+  const ocoValueFlags = /* @__PURE__ */ new Set(["--context", "-c"]);
+  const filtered = [];
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    if (ocoBooleanFlags.has(arg)) continue;
+    if (ocoValueFlags.has(arg)) {
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith("--context=")) continue;
+    filtered.push(arg);
+  }
+  return filtered;
+};
 Z2(
   {
     version: package_default.version,
@@ -73620,6 +73771,11 @@ Z2(
         alias: "g",
         description: "Use Graphite (gt create) instead of git commit",
         default: false
+      },
+      pr: {
+        type: Boolean,
+        description: "Auto-push to origin and create a GitHub PR",
+        default: false
       }
     },
     ignoreArgv: (type) => type === "unknown-flag" || type === "argument",
@@ -73637,7 +73793,16 @@ Z2(
     } else {
       const config8 = getConfig();
       const useGraphite = flags.graphite || config8.OCO_USE_GRAPHITE;
-      commit(extraArgs, flags.context, false, flags.fgm, flags.yes, useGraphite);
+      const commitArgs = stripOcoArgs(extraArgs);
+      commit(
+        commitArgs,
+        flags.context,
+        false,
+        flags.fgm,
+        flags.yes,
+        flags.pr,
+        useGraphite
+      );
     }
   },
   extraArgs
