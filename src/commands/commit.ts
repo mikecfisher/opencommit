@@ -57,6 +57,47 @@ const assertGhInstalled = async (): Promise<void> => {
   }
 };
 
+type ParsedGitRemote = {
+  host: string;
+  repo: string;
+};
+
+const parseGitRemote = (remoteUrl: string): ParsedGitRemote | null => {
+  const trimmed = remoteUrl.trim();
+  const sshMatch = trimmed.match(/^git@([^:]+):([^/]+\/[^/]+?)(?:\.git)?$/);
+  if (sshMatch) {
+    return { host: sshMatch[1], repo: sshMatch[2] };
+  }
+
+  const sshUrlMatch = trimmed.match(
+    /^ssh:\/\/git@([^/]+)\/([^/]+\/[^/]+?)(?:\.git)?$/
+  );
+  if (sshUrlMatch) {
+    return { host: sshUrlMatch[1], repo: sshUrlMatch[2] };
+  }
+
+  const httpsMatch = trimmed.match(
+    /^https?:\/\/([^/]+)\/([^/]+\/[^/]+?)(?:\.git)?$/
+  );
+  if (httpsMatch) {
+    return { host: httpsMatch[1], repo: httpsMatch[2] };
+  }
+
+  return null;
+};
+
+const getOriginRepoSlug = async (): Promise<string | null> => {
+  const gitDir = await getGitDir();
+  const { stdout } = await execa('git', ['remote', 'get-url', 'origin'], {
+    cwd: gitDir
+  });
+
+  const parsed = parseGitRemote(stdout);
+  if (!parsed) return null;
+  if (parsed.host === 'github.com') return parsed.repo;
+  return `${parsed.host}/${parsed.repo}`;
+};
+
 const pushToOriginForPr = async (): Promise<void> => {
   const gitDir = await getGitDir();
   const pushSpinner = spinner();
@@ -75,7 +116,12 @@ const pushToOriginForPr = async (): Promise<void> => {
 const createPullRequest = async (): Promise<void> => {
   const gitDir = await getGitDir();
   await assertGhInstalled();
-  await execa('gh', ['pr', 'create', '--fill'], {
+  const repoSlug = await getOriginRepoSlug();
+  const ghArgs = ['pr', 'create', '--fill'];
+  if (repoSlug) {
+    ghArgs.push('-R', repoSlug);
+  }
+  await execa('gh', ghArgs, {
     cwd: gitDir,
     stdio: 'inherit'
   });

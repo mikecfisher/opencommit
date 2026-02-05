@@ -240,7 +240,7 @@ describe('cli flow to push git branch', () => {
       await findByText('Successfully pushed all commits to origin')
     ).toBeInTheConsole();
     expect(
-      await findByText('gh stub pr create --fill')
+      await findByText(/gh stub pr create --fill/)
     ).toBeInTheConsole();
 
     await cleanup();
@@ -266,7 +266,7 @@ describe('cli flow to push git branch', () => {
 
     expect(await findByText("No 'origin' remote found.")).toBeInTheConsole();
     expect(
-      await queryByText('gh stub pr create --fill')
+      await queryByText(/gh stub pr create --fill/)
     ).not.toBeInTheConsole();
 
     await cleanup();
