@@ -4,8 +4,15 @@ import { outro } from '@clack/prompts';
 
 import currentPackage from '../../package.json';
 import { getOpenCommitLatestVersion } from '../version';
+import { getConfig } from '../commands/config';
 
 export const checkIsLatestVersion = async () => {
+  const config = getConfig();
+
+  if (config.OCO_SKIP_VERSION_CHECK) {
+    return;
+  }
+
   const latestVersion = await getOpenCommitLatestVersion();
 
   if (latestVersion) {

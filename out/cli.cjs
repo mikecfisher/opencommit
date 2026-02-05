@@ -1,4 +1,9 @@
 #!/usr/bin/env node
+
+const __import_meta_url__ = require('url').pathToFileURL(__filename).href;
+const __import_meta_filename__ = __filename;
+const __import_meta_dirname__ = __dirname;
+
 "use strict";
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -3831,6 +3836,11 @@ function getConfigKeyDetails(key) {
         description: "Use Graphite (gt create) instead of git commit. When enabled, commits will create a new stacked branch using Graphite CLI.",
         values: ["true", "false"]
       };
+    case "OCO_SKIP_VERSION_CHECK" /* OCO_SKIP_VERSION_CHECK */:
+      return {
+        description: "Skip the version check that notifies about newer versions of opencommit.",
+        values: ["true", "false"]
+      };
     default:
       return {
         description: "String value",
@@ -3936,6 +3946,7 @@ var init_config = __esm({
       CONFIG_KEYS2["OCO_REASONING_EFFORT"] = "OCO_REASONING_EFFORT";
       CONFIG_KEYS2["OCO_BREAKING_CHANGE"] = "OCO_BREAKING_CHANGE";
       CONFIG_KEYS2["OCO_USE_GRAPHITE"] = "OCO_USE_GRAPHITE";
+      CONFIG_KEYS2["OCO_SKIP_VERSION_CHECK"] = "OCO_SKIP_VERSION_CHECK";
       return CONFIG_KEYS2;
     })(CONFIG_KEYS || {});
     MODEL_LIST = {
@@ -4738,6 +4749,14 @@ var init_config = __esm({
           "Must be true or false"
         );
         return value;
+      },
+      ["OCO_SKIP_VERSION_CHECK" /* OCO_SKIP_VERSION_CHECK */](value) {
+        validateConfig(
+          "OCO_SKIP_VERSION_CHECK" /* OCO_SKIP_VERSION_CHECK */,
+          typeof value === "boolean",
+          "Must be true or false"
+        );
+        return value;
       }
     };
     OCO_AI_PROVIDER_ENUM = /* @__PURE__ */ ((OCO_AI_PROVIDER_ENUM2) => {
@@ -4774,7 +4793,8 @@ var init_config = __esm({
       maxTokensOutput: "OCO_TOKENS_MAX_OUTPUT",
       reasoningEffort: "OCO_REASONING_EFFORT",
       gitPush: "OCO_GITPUSH",
-      useGraphite: "OCO_USE_GRAPHITE"
+      useGraphite: "OCO_USE_GRAPHITE",
+      skipVersionCheck: "OCO_SKIP_VERSION_CHECK"
     };
     BLOCKED_REPO_CONFIG_KEYS = ["OCO_API_KEY", "OCO_API_URL", "OCO_API_CUSTOM_HEADERS"];
     parseJsonc = (content) => {
@@ -4830,7 +4850,8 @@ var init_config = __esm({
       OCO_HOOK_AUTO_UNCOMMENT: false,
       OCO_REASONING_EFFORT: "low",
       OCO_BREAKING_CHANGE: true,
-      OCO_USE_GRAPHITE: false
+      OCO_USE_GRAPHITE: false,
+      OCO_SKIP_VERSION_CHECK: false
     };
     initGlobalConfig = (configPath = defaultConfigPath) => {
       (0, import_fs.writeFileSync)(configPath, (0, import_ini.stringify)(DEFAULT_CONFIG), "utf8");
@@ -4867,7 +4888,8 @@ var init_config = __esm({
         // todo: deprecate
         OCO_REASONING_EFFORT: process.env.OCO_REASONING_EFFORT,
         OCO_BREAKING_CHANGE: parseConfigVarValue(process.env.OCO_BREAKING_CHANGE),
-        OCO_USE_GRAPHITE: parseConfigVarValue(process.env.OCO_USE_GRAPHITE)
+        OCO_USE_GRAPHITE: parseConfigVarValue(process.env.OCO_USE_GRAPHITE),
+        OCO_SKIP_VERSION_CHECK: parseConfigVarValue(process.env.OCO_SKIP_VERSION_CHECK)
       };
     };
     setGlobalConfig = (config8, configPath = defaultConfigPath) => {
@@ -69813,21 +69835,23 @@ ${STRUCTURE_OF_COMMIT}${breakingChangeHints}`
 });
 
 // src/modules/commitlint/pwd-commitlint.ts
-var import_promises, import_path3, findModulePath, getCommitLintModuleType, getCommitLintPWDConfig;
+var import_promises, import_path3, import_module, require2, findModulePath, getCommitLintModuleType, getCommitLintPWDConfig;
 var init_pwd_commitlint = __esm({
   "src/modules/commitlint/pwd-commitlint.ts"() {
     "use strict";
     import_promises = __toESM(require("fs/promises"), 1);
     import_path3 = __toESM(require("path"), 1);
+    import_module = require("module");
+    require2 = (0, import_module.createRequire)(__import_meta_url__);
     findModulePath = (moduleName) => {
       const searchPaths = [
         import_path3.default.join("node_modules", moduleName),
         import_path3.default.join("node_modules", ".pnpm"),
-        import_path3.default.resolve(__dirname, "../..")
+        import_path3.default.resolve(__import_meta_dirname__, "../..")
       ];
       for (const basePath of searchPaths) {
         try {
-          const resolvedPath = require.resolve(moduleName, { paths: [basePath] });
+          const resolvedPath = require2.resolve(moduleName, { paths: [basePath] });
           return resolvedPath;
         } catch {
         }
@@ -69848,7 +69872,7 @@ var init_pwd_commitlint = __esm({
       switch (await getCommitLintModuleType()) {
         case "cjs":
           modulePath = findModulePath("@commitlint/load");
-          load = require(modulePath).default;
+          load = require2(modulePath).default;
           break;
         case "esm":
           modulePath = findModulePath("@commitlint/load/lib/load.js");
@@ -71189,8 +71213,10 @@ var package_default = {
     start: "node ./out/cli.cjs",
     "ollama:start": "OCO_AI_PROVIDER='ollama' node ./out/cli.cjs",
     dev: "ts-node ./src/cli.ts",
+    "dev:bun": "bun run ./src/cli.ts",
     "dev:gemini": "OCO_AI_PROVIDER='gemini' ts-node ./src/cli.ts",
     build: "npx rimraf out && node esbuild.config.js",
+    "build:bun": "bun run esbuild.config.js",
     "build:push": "npm run build && git add . && git commit -m 'build' && git push",
     deploy: "npm publish --tag latest",
     "deploy:build": "npm run build:push && git push --tags && npm run deploy",
@@ -72887,7 +72913,7 @@ var hookCommand = G3(
     parameters: ["<set/unset>"]
   },
   async (argv) => {
-    const HOOK_URL = __filename;
+    const HOOK_URL = __import_meta_filename__;
     const SYMLINK_URL = await getHooksPath();
     try {
       await assertGitRepo();
@@ -73401,7 +73427,12 @@ var getOpenCommitLatestVersion = async () => {
 };
 
 // src/utils/checkIsLatestVersion.ts
+init_config();
 var checkIsLatestVersion = async () => {
+  const config8 = getConfig();
+  if (config8.OCO_SKIP_VERSION_CHECK) {
+    return;
+  }
   const latestVersion = await getOpenCommitLatestVersion();
   if (latestVersion) {
     const currentVersion = package_default.version;

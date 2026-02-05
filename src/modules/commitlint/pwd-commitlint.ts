@@ -1,11 +1,14 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
 
 const findModulePath = (moduleName: string) => {
   const searchPaths = [
     path.join('node_modules', moduleName),
     path.join('node_modules', '.pnpm'),
-    path.resolve(__dirname, '../..')
+    path.resolve(import.meta.dirname, '../..')
   ];
 
   for (const basePath of searchPaths) {

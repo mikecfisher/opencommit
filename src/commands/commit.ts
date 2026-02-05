@@ -15,6 +15,7 @@ import {
   assertGitRepo,
   getChangedFiles,
   getDiff,
+  getGitDir,
   getStagedFiles,
   gitAdd
 } from '../utils/git';
@@ -25,7 +26,8 @@ import { getConfig } from './config';
 const config = getConfig();
 
 const getGitRemotes = async () => {
-  const { stdout } = await execa('git', ['remote']);
+  const gitDir = await getGitDir();
+  const { stdout } = await execa('git', ['remote'], { cwd: gitDir });
   return stdout.split('\n').filter((remote) => Boolean(remote.trim()));
 };
 
@@ -40,6 +42,43 @@ const assertGraphiteInstalled = async (): Promise<void> => {
       'Graphite CLI (gt) is not installed. Install it with: npm install -g @withgraphite/graphite-cli'
     );
   }
+};
+
+/**
+ * Check if GitHub CLI is installed
+ */
+const assertGhInstalled = async (): Promise<void> => {
+  try {
+    await execa('gh', ['--version']);
+  } catch {
+    throw new Error(
+      'GitHub CLI (gh) is not installed. Install it from https://cli.github.com/'
+    );
+  }
+};
+
+const pushToOriginForPr = async (): Promise<void> => {
+  const gitDir = await getGitDir();
+  const pushSpinner = spinner();
+
+  pushSpinner.start(`Running 'git push -u origin HEAD'`);
+
+  const { stdout } = await execa('git', ['push', '-u', 'origin', 'HEAD'], {
+    cwd: gitDir
+  });
+
+  pushSpinner.stop(`${chalk.green('✔')} Successfully pushed all commits to origin`);
+
+  if (stdout) outro(stdout);
+};
+
+const createPullRequest = async (): Promise<void> => {
+  const gitDir = await getGitDir();
+  await assertGhInstalled();
+  await execa('gh', ['pr', 'create', '--fill'], {
+    cwd: gitDir,
+    stdio: 'inherit'
+  });
 };
 
 /**
@@ -103,6 +142,7 @@ interface GenerateCommitMessageFromGitDiffParams {
   context?: string;
   fullGitMojiSpec?: boolean;
   skipCommitConfirmation?: boolean;
+  createPr?: boolean;
   useGraphite?: boolean;
 }
 
@@ -112,6 +152,7 @@ const generateCommitMessageFromGitDiff = async ({
   context = '',
   fullGitMojiSpec = false,
   skipCommitConfirmation = false,
+  createPr = false,
   useGraphite = false
 }: GenerateCommitMessageFromGitDiffParams): Promise<void> => {
   await assertGitRepo();
@@ -217,10 +258,25 @@ ${chalk.grey('——————————————————')}`
       // Skip push workflow for Graphite - users should use gt submit
       if (useGraphite) {
         outro(chalk.dim('Use `gt submit` to push your Graphite stack'));
+        if (createPr) {
+          outro(chalk.dim('Skipping PR creation because Graphite is enabled'));
+        }
         return;
       }
 
       const remotes = await getGitRemotes();
+
+      if (createPr) {
+        if (!remotes.includes('origin')) {
+          throw new Error(
+            "No 'origin' remote found. Add one with: git remote add origin <url>"
+          );
+        }
+
+        await pushToOriginForPr();
+        await createPullRequest();
+        return;
+      }
 
       // user isn't pushing, return early
       if (config.OCO_GITPUSH === false) return;
@@ -301,6 +357,7 @@ ${chalk.grey('——————————————————')}`
           diff,
           extraArgs,
           fullGitMojiSpec,
+          createPr,
           useGraphite
         });
       }
@@ -324,6 +381,7 @@ export async function commit(
   isStageAllFlag: Boolean = false,
   fullGitMojiSpec: boolean = false,
   skipCommitConfirmation: boolean = false,
+  createPr: boolean = false,
   useGraphite: boolean = false
 ) {
   debug('commit', 'Commit function called', {
@@ -372,7 +430,15 @@ export async function commit(
     if (isCancel(isStageAllAndCommitConfirmedByUser)) process.exit(1);
 
     if (isStageAllAndCommitConfirmedByUser) {
-      await commit(extraArgs, context, true, fullGitMojiSpec, skipCommitConfirmation, useGraphite);
+      await commit(
+        extraArgs,
+        context,
+        true,
+        fullGitMojiSpec,
+        skipCommitConfirmation,
+        createPr,
+        useGraphite
+      );
       process.exit(0);
     }
 
@@ -390,7 +456,15 @@ export async function commit(
       await gitAdd({ files });
     }
 
-    await commit(extraArgs, context, false, fullGitMojiSpec, skipCommitConfirmation, useGraphite);
+    await commit(
+      extraArgs,
+      context,
+      false,
+      fullGitMojiSpec,
+      skipCommitConfirmation,
+      createPr,
+      useGraphite
+    );
     process.exit(0);
   }
 
@@ -407,6 +481,7 @@ export async function commit(
       context,
       fullGitMojiSpec,
       skipCommitConfirmation,
+      createPr,
       useGraphite
     })
   );

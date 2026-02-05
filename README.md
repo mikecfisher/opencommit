@@ -239,6 +239,14 @@ This flag allows users to automatically commit the changes without having to man
 oco --yes
 ```
 
+#### Auto-Create GitHub PR
+
+Use `--pr` to auto-push the current branch to `origin` and create a pull request using the GitHub CLI. This runs `gh pr create --fill`, so your commit messages are used for the PR title and body. Requires `gh` to be installed and authenticated.
+
+```
+oco --pr
+```
+
 ## Configuration
 
 ### Local per repo configuration
