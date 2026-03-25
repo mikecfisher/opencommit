@@ -85,10 +85,12 @@ export const MODEL_LIST = {
   ],
 
   anthropic: [
-    'claude-3-5-sonnet-20240620',
-    'claude-3-opus-20240229',
-    'claude-3-sonnet-20240229',
-    'claude-3-haiku-20240307'
+    'sonnet',
+    'opus',
+    'haiku',
+    'claude-sonnet-4-6',
+    'claude-opus-4-6',
+    'claude-haiku-4-5'
   ],
 
   gemini: [
@@ -858,13 +860,13 @@ export const configValidators = {
   },
 
   [CONFIG_KEYS.OCO_REASONING_EFFORT](value: any) {
-    const validValues = ['none', 'low', 'medium', 'high'];
+    const validValues = ['none', 'low', 'medium', 'high', 'max'];
     validateConfig(
       CONFIG_KEYS.OCO_REASONING_EFFORT,
       validValues.includes(value),
       `Must be one of: ${validValues.join(
         ', '
-      )}. This setting only applies to GPT-5 and reasoning models.`
+      )}. This setting applies to GPT-5/reasoning models and Claude Agent SDK effort.`
     );
     return value;
   },
@@ -913,7 +915,7 @@ export enum OCO_AI_PROVIDER_ENUM {
   OPENROUTER = 'openrouter'
 }
 
-export type ReasoningEffort = 'none' | 'low' | 'medium' | 'high';
+export type ReasoningEffort = 'none' | 'low' | 'medium' | 'high' | 'max';
 
 // Best-effort provider inference for common, unambiguous model names.
 // Intentionally conservative: we only infer providers whose model namespaces

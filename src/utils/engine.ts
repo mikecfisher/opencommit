@@ -3,6 +3,7 @@ import {
   inferProviderFromModel,
   OCO_AI_PROVIDER_ENUM
 } from '../commands/config';
+import { ClaudeAgentSdkEngine } from '../engine/ClaudeAgentSdkEngine';
 import { FlowiseEngine } from '../engine/flowise';
 import { TestAi, TestMockType } from '../engine/testAi';
 import { debug, warn } from './logger';
@@ -32,7 +33,11 @@ export function parseCustomHeaders(headers: unknown): Record<string, string> {
   return parsedHeaders;
 }
 
-export type AiEngine = UnifiedEngineType | FlowiseEngine | TestAi;
+export type AiEngine =
+  | ClaudeAgentSdkEngine
+  | UnifiedEngineType
+  | FlowiseEngine
+  | TestAi;
 
 export async function getEngine(): Promise<AiEngine> {
   const config = getConfig();
@@ -78,6 +83,18 @@ export async function getEngine(): Promise<AiEngine> {
       maxTokensInput: config.OCO_TOKENS_MAX_INPUT,
       baseURL: config.OCO_API_URL ?? '',
       apiKey: config.OCO_API_KEY ?? ''
+    });
+  }
+
+  if (provider === OCO_AI_PROVIDER_ENUM.ANTHROPIC) {
+    debug('engine', 'Using ClaudeAgentSdkEngine');
+    return new ClaudeAgentSdkEngine({
+      model: config.OCO_MODEL,
+      maxTokensOutput: config.OCO_TOKENS_MAX_OUTPUT,
+      maxTokensInput: config.OCO_TOKENS_MAX_INPUT,
+      baseURL: config.OCO_API_URL ?? '',
+      apiKey: config.OCO_API_KEY ?? '',
+      reasoningEffort: config.OCO_REASONING_EFFORT
     });
   }
 

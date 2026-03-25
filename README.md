@@ -72,7 +72,7 @@ Create a `.opencommit.jsonc` file in your repo root for project-specific setting
 
 | JSON Key | Description |
 |----------|-------------|
-| `model` | AI model (gpt-4o, claude-3-5-sonnet, etc.) |
+| `model` | AI model (gpt-4o, sonnet, gemini-2.5-flash, etc.) |
 | `provider` | AI provider (openai, anthropic, gemini, ollama, etc.) |
 | `emoji` | Prefix with GitMoji |
 | `description` | Add description after commit |
@@ -118,7 +118,7 @@ Use the `--debug` flag to output detailed logs:
 oco --debug
 ```
 
-Logs are written to `~/.opencommit/debug.log` for troubleshooting.
+Logs are written to `~/.opencommit-debug.log` for troubleshooting.
 
 ### Reasoning Model Support
 
@@ -132,10 +132,16 @@ Higher effort = better quality but slower and more expensive.
 
 ### Expanded Model Support
 
+- **Anthropic / Claude**: Commit generation now runs through the Claude Agent SDK
 - **OpenAI**: GPT-4o, GPT-4, o1, o3, o3-mini, o4-mini, and more
 - **Anthropic**: Claude 3.5 Sonnet, Claude 3 Opus/Sonnet/Haiku
 - **Google**: Gemini 2.5 Flash/Pro, Gemini 3 (preview), Gemini 2.0/1.5
 - **Others**: Mistral, Groq, DeepSeek, Ollama, OpenRouter, AI/ML API
+
+For `OCO_AI_PROVIDER=anthropic`, you can now either:
+
+- set `OCO_API_KEY` as before, or
+- leave `OCO_API_KEY` unset and rely on your existing Claude Code login/auth
 
 ### Increased Default Token Limit
 
@@ -263,7 +269,7 @@ OCO_TOKENS_MAX_INPUT=<max model token limit (default: 32000)>
 OCO_TOKENS_MAX_OUTPUT=<max response tokens (default: 500)>
 OCO_DESCRIPTION=<boolean, add description after commit message>
 OCO_EMOJI=<boolean, add GitMoji>
-OCO_MODEL=<model name, e.g. gpt-4o, claude-3-5-sonnet, gemini-2.5-flash>
+OCO_MODEL=<model name, e.g. gpt-4o, sonnet, gemini-2.5-flash>
 OCO_LANGUAGE=<locale, e.g. en, de, fr>
 OCO_PROMPT_MODULE=<conventional-commit or @commitlint>
 OCO_ONE_LINE_COMMIT=<boolean, single line commits>
@@ -272,6 +278,8 @@ OCO_REASONING_EFFORT=<none, low, medium, high - for reasoning models>
 ```
 
 Global configs are stored in `~/.opencommit` and set with `oco config set`, e.g. `oco config set OCO_MODEL=gpt-4o`.
+
+For `OCO_AI_PROVIDER=anthropic`, prefer Claude Code model names like `sonnet`, `opus`, or `haiku`. Legacy Claude 3.x API model IDs are auto-mapped for compatibility.
 
 ### Global config for all repos
 

@@ -1,9 +1,12 @@
 import { DEFAULT_TOKEN_LIMITS, getConfig } from './commands/config';
+import { CommitMessageRequest } from './engine/Engine';
+import { COMMIT_MESSAGE_OUTPUT_SCHEMA } from './engine/ClaudeAgentSdkEngine';
 import { getMainCommitPrompt } from './prompts';
 import {
   analyzeBreakingChanges,
   BreakingChangeHint
 } from './utils/breakingChange';
+import { getGitDir } from './utils/git';
 import { getEngine } from './utils/engine';
 import { debug } from './utils/logger';
 import { mergeDiffs } from './utils/mergeDiffs';
@@ -42,6 +45,67 @@ const generateCommitMessageChatCompletionPrompt = async (
   return chatContextAsCompletionRequest;
 };
 
+const buildPromptTextFromMessages = (
+  messages: Array<Message>,
+  diff: string
+): { systemPrompt: string; userPrompt: string } => {
+  const [systemMessage, exampleInput, exampleOutput] = messages;
+  const exampleSections = [] as string[];
+
+  if (exampleInput?.content) {
+    exampleSections.push(`Example staged diff:\n${exampleInput.content}`);
+  }
+
+  if (exampleOutput?.content) {
+    exampleSections.push(
+      `Example commit message:\n${exampleOutput.content}`
+    );
+  }
+
+  const userPrompt = [
+    exampleSections.length
+      ? 'Use this example to match the expected commit style and format.'
+      : '',
+    ...exampleSections,
+    `Generate the structured commit message for this staged diff:\n${diff}`
+  ]
+    .filter(Boolean)
+    .join('\n\n');
+
+  return {
+    systemPrompt: systemMessage?.content ?? '',
+    userPrompt
+  };
+};
+
+const buildCommitMessageRequest = async (
+  diff: string,
+  fullGitMojiSpec: boolean,
+  context: string,
+  breakingChangeHints: BreakingChangeHint[] = [],
+  useGraphite: boolean = false
+): Promise<CommitMessageRequest> => {
+  const fallbackMessages = await generateCommitMessageChatCompletionPrompt(
+    diff,
+    fullGitMojiSpec,
+    context,
+    breakingChangeHints,
+    useGraphite
+  );
+  const { systemPrompt, userPrompt } = buildPromptTextFromMessages(
+    fallbackMessages,
+    diff
+  );
+
+  return {
+    systemPrompt,
+    userPrompt,
+    cwd: await getGitDir(),
+    outputSchema: COMMIT_MESSAGE_OUTPUT_SCHEMA as Record<string, unknown>,
+    fallbackMessages
+  };
+};
+
 export const GenerateCommitMessageErrorEnum = {
   tooMuchTokens: 'TOO_MUCH_TOKENS',
   internalError: 'INTERNAL_ERROR',
@@ -57,6 +121,7 @@ export const generateCommitMessageByDiff = async (
   context: string = '',
   useGraphite: boolean = false
 ): Promise<string> => {
+  const generationStartTime = Date.now();
   const diffTokens = tokenCount(diff);
 
   debug('generateCommitMessage', 'Starting', {
@@ -122,10 +187,15 @@ export const generateCommitMessageByDiff = async (
         await delay(2000);
       }
 
+      debug('generateCommitMessage', 'Split success', {
+        messageCount: commitMessages.length,
+        durationMs: Date.now() - generationStartTime
+      });
+
       return commitMessages.join('\n\n');
     }
 
-    const messages = await generateCommitMessageChatCompletionPrompt(
+    const request = await buildCommitMessageRequest(
       diff,
       fullGitMojiSpec,
       context,
@@ -134,21 +204,27 @@ export const generateCommitMessageByDiff = async (
     );
 
     debug('generateCommitMessage', 'Calling engine', {
-      messageCount: messages.length
+      messageCount: request.fallbackMessages.length
     });
 
     const engine = await getEngine();
-    const commitMessage = await engine.generateCommitMessage(messages);
+    const engineStartTime = Date.now();
+    const commitMessage = await engine.generateCommitMessageFromRequest(request);
 
     if (!commitMessage)
       throw new Error(GenerateCommitMessageErrorEnum.emptyMessage);
 
     debug('generateCommitMessage', 'Success', {
-      messageLength: commitMessage.length
+      messageLength: commitMessage.length,
+      engineDurationMs: Date.now() - engineStartTime,
+      totalDurationMs: Date.now() - generationStartTime
     });
 
     return commitMessage;
   } catch (error) {
+    debug('generateCommitMessage', 'Failed', {
+      durationMs: Date.now() - generationStartTime
+    });
     throw error;
   }
 };
@@ -184,14 +260,14 @@ async function getMessagesPromisesByChangesInFile(
   const engine = await getEngine();
   const commitMsgsFromFileLineDiffs = lineDiffsWithHeader.map(
     async (lineDiff) => {
-      const messages = await generateCommitMessageChatCompletionPrompt(
+      const request = await buildCommitMessageRequest(
         separator + lineDiff,
         fullGitMojiSpec,
         '',
         breakingChangeHints
       );
 
-      return engine.generateCommitMessage(messages);
+      return engine.generateCommitMessageFromRequest(request);
     }
   );
 
@@ -262,7 +338,7 @@ export const getCommitMsgsPromisesFromFileDiffs = async (
 
       commitMessagePromises.push(...messagesPromises);
     } else {
-      const messages = await generateCommitMessageChatCompletionPrompt(
+      const request = await buildCommitMessageRequest(
         separator + fileDiff,
         fullGitMojiSpec,
         '',
@@ -270,7 +346,7 @@ export const getCommitMsgsPromisesFromFileDiffs = async (
       );
 
       const engine = await getEngine();
-      commitMessagePromises.push(engine.generateCommitMessage(messages));
+      commitMessagePromises.push(engine.generateCommitMessageFromRequest(request));
     }
   }
 

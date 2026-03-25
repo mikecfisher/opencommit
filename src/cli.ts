@@ -57,7 +57,7 @@ cli(
       debug: {
         type: Boolean,
         alias: 'd',
-        description: 'Enable debug logging to ~/.opencommit/debug.log',
+        description: 'Enable debug logging to ~/.opencommit-debug.log',
         default: false
       },
       fgm: {

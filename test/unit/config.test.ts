@@ -208,6 +208,19 @@ describe('config', () => {
       rmSync(globalConfigFile.filePath);
     });
 
+    it('accepts max as a reasoning effort value', async () => {
+      await setConfig(
+        [[CONFIG_KEYS.OCO_REASONING_EFFORT, 'max']],
+        globalConfigFile.filePath
+      );
+
+      const config = getConfig({
+        globalPath: globalConfigFile.filePath
+      });
+
+      expect(config.OCO_REASONING_EFFORT).toBe('max');
+    });
+
     it('should create .opencommit file with DEFAULT CONFIG if it does not exist on first setConfig run', async () => {
       const isGlobalConfigFileExist = existsSync(globalConfigFile.filePath);
       expect(isGlobalConfigFileExist).toBe(false);

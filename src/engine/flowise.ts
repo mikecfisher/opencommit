@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import { removeContentTags } from '../utils/removeContentTags';
-import { AiEngineConfig } from './Engine';
+import { AiEngineConfig, CommitMessageRequest } from './Engine';
 
 interface FlowiseAiConfig extends AiEngineConfig {}
 
@@ -46,5 +46,11 @@ export class FlowiseEngine {
       const message = error.response?.data?.error ?? error.message;
       throw new Error('local model issues. details: ' + message);
     }
+  }
+
+  async generateCommitMessageFromRequest(
+    request: CommitMessageRequest
+  ): Promise<string | undefined> {
+    return this.generateCommitMessage(request.fallbackMessages);
   }
 }

@@ -1,10 +1,29 @@
-import { appendFileSync, existsSync, mkdirSync } from 'fs';
+import { appendFileSync, existsSync, mkdirSync, statSync } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
 import chalk from 'chalk';
 
-const LOG_DIR = join(homedir(), '.opencommit');
-const LOG_PATH = join(LOG_DIR, 'debug.log');
+const LEGACY_LOG_DIR = join(homedir(), '.opencommit');
+const FALLBACK_LOG_PATH = join(homedir(), '.opencommit-debug.log');
+
+const resolveLogPath = (): string => {
+  if (!existsSync(LEGACY_LOG_DIR)) {
+    mkdirSync(LEGACY_LOG_DIR, { recursive: true });
+    return join(LEGACY_LOG_DIR, 'debug.log');
+  }
+
+  try {
+    if (statSync(LEGACY_LOG_DIR).isDirectory()) {
+      return join(LEGACY_LOG_DIR, 'debug.log');
+    }
+  } catch {
+    // Fall through to the flat-file path.
+  }
+
+  return FALLBACK_LOG_PATH;
+};
+
+const LOG_PATH = resolveLogPath();
 
 let debugEnabled = false;
 let sessionStartTime: number = 0;
@@ -12,11 +31,6 @@ let sessionStartTime: number = 0;
 export function enableDebug(): void {
   debugEnabled = true;
   sessionStartTime = Date.now();
-
-  // Ensure log directory exists
-  if (!existsSync(LOG_DIR)) {
-    mkdirSync(LOG_DIR, { recursive: true });
-  }
 
   // Write session start marker
   const timestamp = new Date().toISOString();

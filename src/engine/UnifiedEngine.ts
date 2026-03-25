@@ -9,7 +9,7 @@ import { createDeepSeek } from '@ai-sdk/deepseek';
 import { createOllama } from 'ollama-ai-provider';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { OCO_AI_PROVIDER_ENUM } from '../commands/config';
-import { AiEngineConfig } from './Engine';
+import { AiEngineConfig, CommitMessageRequest } from './Engine';
 import { removeContentTags } from '../utils/removeContentTags';
 import { tokenCount } from '../utils/tokenCount';
 import { GenerateCommitMessageErrorEnum } from '../generateCommitMessageFromGitDiff';
@@ -113,6 +113,12 @@ export class UnifiedEngine {
       });
       throw new Error(`${this.config.provider} error: ${err.message}`);
     }
+  }
+
+  async generateCommitMessageFromRequest(
+    request: CommitMessageRequest
+  ): Promise<string | null> {
+    return this.generateCommitMessage(request.fallbackMessages);
   }
 
   private getModel() {

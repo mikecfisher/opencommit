@@ -18,6 +18,7 @@ const importMetaDefine = {
 await build({
   entryPoints: ['./src/cli.ts'],
   bundle: true,
+  external: ['@anthropic-ai/claude-agent-sdk'],
   platform: 'node',
   format: 'cjs',
   outfile: './out/cli.cjs',
@@ -28,6 +29,7 @@ await build({
 await build({
   entryPoints: ['./src/github-action.ts'],
   bundle: true,
+  external: ['@anthropic-ai/claude-agent-sdk'],
   platform: 'node',
   format: 'cjs',
   outfile: './out/github-action.cjs',

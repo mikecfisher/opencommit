@@ -37,7 +37,7 @@ const PROVIDER_OPTIONS: Array<{
   {
     value: OCO_AI_PROVIDER_ENUM.ANTHROPIC,
     label: 'Anthropic',
-    hint: 'Claude 3.5 Sonnet, Opus',
+    hint: 'Claude 3.5 Sonnet, Opus, or Claude Code auth',
     requiresApiKey: true
   },
   {
@@ -276,7 +276,26 @@ async function runSetupWizard(): Promise<void> {
   const providerConfig = PROVIDER_OPTIONS.find((p) => p.value === provider);
   let apiKey = currentConfig.OCO_API_KEY ?? '';
 
-  if (providerConfig?.requiresApiKey) {
+  if (provider === OCO_AI_PROVIDER_ENUM.ANTHROPIC) {
+    const apiKeyResult = await text({
+      message:
+        'Enter your Anthropic API key (leave blank to use Claude Code auth):',
+      placeholder: 'sk-ant-... or leave blank',
+      initialValue: apiKey,
+      validate(value) {
+        if (!value || value.trim().length === 0) {
+          return undefined;
+        }
+        if (value.trim().length < 10) {
+          return 'API key seems too short';
+        }
+        return undefined;
+      }
+    });
+
+    if (isCancel(apiKeyResult)) handleCancel();
+    apiKey = (apiKeyResult as string).trim();
+  } else if (providerConfig?.requiresApiKey) {
     const apiKeyResult = await text({
       message: `Enter your ${providerConfig.label} API key:`,
       placeholder: 'sk-...',

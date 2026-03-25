@@ -202,6 +202,7 @@ const generateCommitMessageFromGitDiff = async ({
   useGraphite = false
 }: GenerateCommitMessageFromGitDiffParams): Promise<void> => {
   await assertGitRepo();
+  const generationStartTime = Date.now();
 
   debug('commit', 'Starting commit message generation', {
     diffLength: diff.length,
@@ -224,7 +225,8 @@ const generateCommitMessageFromGitDiff = async ({
     );
 
     debug('commit', 'Received commit message', {
-      messageLength: commitMessage.length
+      messageLength: commitMessage.length,
+      generationDurationMs: Date.now() - generationStartTime
     });
 
     const messageTemplate = checkMessageTemplate(extraArgs);
@@ -409,6 +411,9 @@ ${chalk.grey('——————————————————')}`
       }
     }
   } catch (error) {
+    debug('commit', 'Commit message generation failed', {
+      generationDurationMs: Date.now() - generationStartTime
+    });
     commitGenerationSpinner.stop(
       `${chalk.red('✖')} Failed to generate the commit message`
     );

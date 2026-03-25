@@ -95,8 +95,9 @@ export const gitAdd = async ({ files }: { files: string[] }) => {
 
 export const getDiff = async ({ files }: { files: string[] }) => {
   const gitDir = await getGitDir();
+  const ig = await getOpenCommitIgnore();
 
-  const lockFiles = files.filter(
+  const excludedByDefault = files.filter(
     (file) =>
       file.includes('.lock') ||
       file.includes('-lock.') ||
@@ -107,22 +108,30 @@ export const getDiff = async ({ files }: { files: string[] }) => {
       file.includes('.webp') ||
       file.includes('.gif')
   );
+  const ignoredFiles = files.filter((file) => ig.ignores(file));
+  const excludedFiles = [...new Set([...excludedByDefault, ...ignoredFiles])];
 
-  if (lockFiles.length) {
+  if (excludedFiles.length) {
     outro(
-      `Some files are excluded by default from 'git diff'. No commit messages are generated for this files:\n${lockFiles.join(
+      `Some files are excluded from commit message generation. No commit messages are generated for these files:\n${excludedFiles.join(
         '\n'
       )}`
     );
   }
 
-  const filesWithoutLocks = files.filter(
-    (file) => !file.includes('.lock') && !file.includes('-lock.')
+  const filesToDiff = files.filter(
+    (file) =>
+      !excludedByDefault.includes(file) &&
+      !ignoredFiles.includes(file)
   );
+
+  if (!filesToDiff.length) {
+    return '';
+  }
 
   const { stdout: diff } = await execa(
     'git',
-    ['diff', '--staged', '--', ...filesWithoutLocks],
+    ['diff', '--staged', '--', ...filesToDiff],
     { cwd: gitDir }
   );
 

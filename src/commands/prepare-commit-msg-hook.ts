@@ -39,7 +39,10 @@ export const prepareCommitMessageHook = async (
 
     const config = getConfig();
 
-    if (!config.OCO_API_KEY) {
+    const usesClaudeCodeAuth =
+      config.OCO_AI_PROVIDER === 'anthropic' && !config.OCO_API_KEY;
+
+    if (!config.OCO_API_KEY && !usesClaudeCodeAuth) {
       outro(
         'No OCO_API_KEY is set. Set your key via `oco config set OCO_API_KEY=<value>. For more info see https://github.com/di-sukharev/opencommit'
       );

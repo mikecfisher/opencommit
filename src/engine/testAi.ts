@@ -1,4 +1,4 @@
-import { AiEngineConfig } from './Engine';
+import { AiEngineConfig, CommitMessageRequest } from './Engine';
 
 export const TEST_MOCK_TYPES = [
   'commit-message',
@@ -34,5 +34,11 @@ export class TestAi {
       default:
         throw Error('unsupported test mock type');
     }
+  }
+
+  async generateCommitMessageFromRequest(
+    request: CommitMessageRequest
+  ): Promise<string | undefined> {
+    return this.generateCommitMessage(request.fallbackMessages);
   }
 }
