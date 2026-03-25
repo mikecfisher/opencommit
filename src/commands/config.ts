@@ -915,6 +915,33 @@ export enum OCO_AI_PROVIDER_ENUM {
 
 export type ReasoningEffort = 'none' | 'low' | 'medium' | 'high';
 
+// Best-effort provider inference for common, unambiguous model names.
+// Intentionally conservative: we only infer providers whose model namespaces
+// don't overlap with OpenAI-compatible providers (e.g., Azure/OpenRouter).
+export function inferProviderFromModel(
+  model: unknown
+): OCO_AI_PROVIDER_ENUM | undefined {
+  if (typeof model !== 'string' || !model) return undefined;
+
+  // Namespaced models like "google/gemini-..." are typically for aggregators
+  // (OpenRouter/AI-ML API). Don't guess in that case.
+  if (model.includes('/')) return undefined;
+
+  if (
+    model.startsWith('gemini-') ||
+    model.startsWith('text-embedding-') ||
+    MODEL_LIST.gemini.includes(model)
+  ) {
+    return OCO_AI_PROVIDER_ENUM.GEMINI;
+  }
+
+  if (model.startsWith('claude') || MODEL_LIST.anthropic.includes(model)) {
+    return OCO_AI_PROVIDER_ENUM.ANTHROPIC;
+  }
+
+  return undefined;
+}
+
 export type ConfigType = {
   [CONFIG_KEYS.OCO_API_KEY]?: string;
   [CONFIG_KEYS.OCO_TOKENS_MAX_INPUT]: number;
@@ -1226,9 +1253,22 @@ export const setConfig = (
     globalPath: globalConfigPath
   });
 
+  const hasExplicitProvider = keyValues.some(
+    ([key]) => key === CONFIG_KEYS.OCO_AI_PROVIDER
+  );
+  const modelEntry = keyValues.find(([key]) => key === CONFIG_KEYS.OCO_MODEL);
+  const inferredProvider =
+    !hasExplicitProvider && modelEntry
+      ? inferProviderFromModel(modelEntry[1])
+      : undefined;
+
+  const effectiveKeyValues: typeof keyValues = inferredProvider
+    ? ([[CONFIG_KEYS.OCO_AI_PROVIDER, inferredProvider]] as any).concat(keyValues)
+    : keyValues;
+
   const configToSet = {};
 
-  for (let [key, value] of keyValues) {
+  for (let [key, value] of effectiveKeyValues) {
     if (!configValidators.hasOwnProperty(key)) {
       const supportedKeys = Object.keys(configValidators).join('\n');
       throw new Error(

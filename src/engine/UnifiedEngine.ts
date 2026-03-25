@@ -207,11 +207,18 @@ export class UnifiedEngine {
   }
 
   private getGenerationOptions(): Record<string, unknown> {
-    const { model } = this.config;
+    const { model, provider } = this.config;
 
     // O-series and GPT-5 reasoning models - no temperature/topP
     if (this.isOSeriesModel(model) || this.isGpt5Model(model)) {
       return {};
+    }
+
+    // Anthropic doesn't allow both temperature and topP
+    if (provider === OCO_AI_PROVIDER_ENUM.ANTHROPIC) {
+      return {
+        temperature: 0
+      };
     }
 
     // Standard models - use temperature/topP

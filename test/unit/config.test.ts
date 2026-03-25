@@ -325,5 +325,23 @@ describe('config', () => {
       const fileContent2 = readFileSync(globalConfigFile.filePath, 'utf8');
       expect(fileContent2).toContain('OCO_MODEL=gpt-4');
     });
+
+    it('should infer provider when setting a Gemini model', async () => {
+      globalConfigFile = await generateConfig('.opencommit', {
+        OCO_AI_PROVIDER: 'anthropic'
+      });
+
+      await setConfig(
+        [[CONFIG_KEYS.OCO_MODEL, 'gemini-2.5-flash']],
+        globalConfigFile.filePath
+      );
+
+      const config = getConfig({
+        globalPath: globalConfigFile.filePath
+      });
+
+      expect(config.OCO_MODEL).toEqual('gemini-2.5-flash');
+      expect(config.OCO_AI_PROVIDER).toEqual('gemini');
+    });
   });
 });

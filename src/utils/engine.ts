@@ -1,7 +1,11 @@
-import { getConfig, OCO_AI_PROVIDER_ENUM } from '../commands/config';
+import {
+  getConfig,
+  inferProviderFromModel,
+  OCO_AI_PROVIDER_ENUM
+} from '../commands/config';
 import { FlowiseEngine } from '../engine/flowise';
 import { TestAi, TestMockType } from '../engine/testAi';
-import { debug } from './logger';
+import { debug, warn } from './logger';
 
 // Lazy import for UnifiedEngine to avoid loading AI SDK unless needed
 type UnifiedEngineType = import('../engine/UnifiedEngine').UnifiedEngine;
@@ -32,7 +36,28 @@ export type AiEngine = UnifiedEngineType | FlowiseEngine | TestAi;
 
 export async function getEngine(): Promise<AiEngine> {
   const config = getConfig();
-  const provider = config.OCO_AI_PROVIDER;
+  let provider = config.OCO_AI_PROVIDER;
+
+  // Guard against mismatched provider/model configs (common when switching
+  // models via `oco config set model=...` but provider wasn't updated).
+  const inferredProvider = inferProviderFromModel(config.OCO_MODEL);
+  const canAutoCorrectProvider = [
+    OCO_AI_PROVIDER_ENUM.OPENAI,
+    OCO_AI_PROVIDER_ENUM.ANTHROPIC,
+    OCO_AI_PROVIDER_ENUM.GEMINI
+  ].includes(provider);
+  if (
+    canAutoCorrectProvider &&
+    inferredProvider &&
+    inferredProvider !== provider
+  ) {
+    warn('engine', 'OCO_MODEL implies a different provider; overriding', {
+      configuredProvider: provider,
+      inferredProvider,
+      model: config.OCO_MODEL
+    });
+    provider = inferredProvider;
+  }
 
   debug('engine', 'Getting engine', {
     provider,

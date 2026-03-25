@@ -3734,6 +3734,17 @@ var init_i18n = __esm({
 });
 
 // src/commands/config.ts
+function inferProviderFromModel(model) {
+  if (typeof model !== "string" || !model) return void 0;
+  if (model.includes("/")) return void 0;
+  if (model.startsWith("gemini-") || model.startsWith("text-embedding-") || MODEL_LIST.gemini.includes(model)) {
+    return "gemini" /* GEMINI */;
+  }
+  if (model.startsWith("claude") || MODEL_LIST.anthropic.includes(model)) {
+    return "anthropic" /* ANTHROPIC */;
+  }
+  return void 0;
+}
 function getConfigKeyDetails(key) {
   switch (key) {
     case "OCO_MODEL" /* OCO_MODEL */:
@@ -4953,8 +4964,14 @@ var init_config = __esm({
       const config8 = getConfig({
         globalPath: globalConfigPath
       });
+      const hasExplicitProvider = keyValues.some(
+        ([key]) => key === "OCO_AI_PROVIDER" /* OCO_AI_PROVIDER */
+      );
+      const modelEntry = keyValues.find(([key]) => key === "OCO_MODEL" /* OCO_MODEL */);
+      const inferredProvider = !hasExplicitProvider && modelEntry ? inferProviderFromModel(modelEntry[1]) : void 0;
+      const effectiveKeyValues = inferredProvider ? [["OCO_AI_PROVIDER" /* OCO_AI_PROVIDER */, inferredProvider]].concat(keyValues) : keyValues;
       const configToSet = {};
-      for (let [key, value] of keyValues) {
+      for (let [key, value] of effectiveKeyValues) {
         if (!configValidators.hasOwnProperty(key)) {
           const supportedKeys = Object.keys(configValidators).join("\n");
           throw new Error(
@@ -19644,6 +19661,9 @@ function writeLog(level, context, message, data) {
 }
 function debug(context, message, data) {
   writeLog("DEBUG", context, message, data);
+}
+function warn(context, message, data) {
+  writeLog("WARN", context, message, data);
 }
 function error(context, message, data) {
   writeLog("ERROR", context, message, data);
@@ -69467,9 +69487,14 @@ var init_UnifiedEngine = __esm({
         }
       }
       getGenerationOptions() {
-        const { model } = this.config;
+        const { model, provider } = this.config;
         if (this.isOSeriesModel(model) || this.isGpt5Model(model)) {
           return {};
+        }
+        if (provider === "anthropic" /* ANTHROPIC */) {
+          return {
+            temperature: 0
+          };
         }
         return {
           temperature: 0,
@@ -69496,7 +69521,21 @@ var init_UnifiedEngine = __esm({
 // src/utils/engine.ts
 async function getEngine() {
   const config8 = getConfig();
-  const provider = config8.OCO_AI_PROVIDER;
+  let provider = config8.OCO_AI_PROVIDER;
+  const inferredProvider = inferProviderFromModel(config8.OCO_MODEL);
+  const canAutoCorrectProvider = [
+    "openai" /* OPENAI */,
+    "anthropic" /* ANTHROPIC */,
+    "gemini" /* GEMINI */
+  ].includes(provider);
+  if (canAutoCorrectProvider && inferredProvider && inferredProvider !== provider) {
+    warn("engine", "OCO_MODEL implies a different provider; overriding", {
+      configuredProvider: provider,
+      inferredProvider,
+      model: config8.OCO_MODEL
+    });
+    provider = inferredProvider;
+  }
   debug("engine", "Getting engine", {
     provider,
     model: config8.OCO_MODEL
